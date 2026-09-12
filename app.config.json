@@ -1,0 +1,26 @@
+{
+  "$schema": "./schemas/app-config.schema.json",
+  "name": "Pass-the-Phone Vote",
+  "nameJa": "スマホ回し投票",
+  "slug": "pass-the-phone-vote",
+  "version": "1.0.0",
+  "description": "Create a private in-person vote on one phone, pass it around, and reveal the tally after everyone has voted.",
+  "descriptionJa": "1台のスマホを順番に渡して秘密投票し、全員の投票後にまとめて開票するブラウザツールです。",
+  "defaultLanguage": "auto",
+  "repository": {
+    "owner": "ttomohisa",
+    "name": "htmlapps-pass-the-phone-vote"
+  },
+  "build": {
+    "output": "dist/index.html",
+    "blockRuntimeNetwork": true,
+    "selfExtract": {
+      "enabled": true,
+      "output": "dist/index.self-extract.html"
+    },
+    "sizeBudget": {
+      "readableWarningMb": 25,
+      "selfExtractWarningMb": 12
+    }
+  }
+}
