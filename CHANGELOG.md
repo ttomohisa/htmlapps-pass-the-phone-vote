@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Added UTF-8 aggregate-result `.txt` downloads with an editable safe filename, using the same text as Copy/Share.
+- Added temporary setup Undo for choice deletion and preset replacement, guarded against newer edits and vote/session changes.
+- Fixed interrupted reveal holds, including brief Space+Tab, lost focus, hidden pages, pointer cancellation, and stale animation callbacks.
+- Kept IME confirmation Enter from moving focus or adding choices.
+- Kept accepted votes in memory when recovery writes fail; added persistent localized warnings and best-effort stale-snapshot cleanup with honest removal-failure disclosure.
+- Added dependency-free voting and packaging regressions to required checks, including both generated variants and root-download parity.
+
 ## 1.0.0
 
 - Promoted the release candidate to the first stable release without expanding scope.

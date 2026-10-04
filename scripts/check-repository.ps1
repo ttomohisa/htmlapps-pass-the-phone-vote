@@ -54,6 +54,13 @@ foreach ($relative in $required) {
 
 & (Join-Path $Root "scripts\check-powershell-syntax.ps1") -RootPath $Root
 
+# Dependency-free behavior and release packaging regressions are required.
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "Node.js 22 or newer is required for voting regression checks." }
+& node (Join-Path $Root "scripts\voting-behavior.test.cjs")
+if ($LASTEXITCODE -ne 0) { throw "Voting source behavior regression failed." }
+& node --test (Join-Path $Root "scripts\voting-packaging.test.cjs")
+if ($LASTEXITCODE -ne 0) { throw "Voting release packaging regression failed." }
+
 $mobileBottomBarPath = Join-Path $Root "components\mobile-bottom-bar.html"
 $mobileBottomBarText = Get-Content -Raw -Encoding UTF8 $mobileBottomBarPath
 $mobileBottomBarRequiredTokens = @(
@@ -232,6 +239,13 @@ if ([string]::IsNullOrWhiteSpace([string]$app.version)) { throw "app.config.json
 $buildArguments = @{}
 if ($ForceDownload) { $buildArguments.ForceDownload = $true }
 & (Join-Path $Root "build-standalone.ps1") @buildArguments
+
+foreach ($variant in @("dist\index.html", "dist\index.self-extract.html", "pass-the-phone-vote.html")) {
+  & node (Join-Path $Root "scripts\voting-behavior.test.cjs") (Join-Path $Root $variant)
+  if ($LASTEXITCODE -ne 0) { throw "Voting behavior regression failed: $variant" }
+}
+& node (Join-Path $Root "scripts\verify-release-alias.cjs")
+if ($LASTEXITCODE -ne 0) { throw "Root download parity check failed." }
 
 Write-Host "[OK] Repository check passed." -ForegroundColor Green
 
