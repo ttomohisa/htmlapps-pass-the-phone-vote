@@ -25,10 +25,18 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        node: [22, 24]
     timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
 
       - name: Validate PowerShell syntax and encoding
         shell: powershell
@@ -41,7 +49,7 @@ jobs:
       - name: Upload standalone artifact
         uses: actions/upload-artifact@v7
         with:
-          name: standalone-html-${{ github.event.pull_request.head.sha || github.sha }}
+          name: standalone-html-${{ github.event.pull_request.head.sha || github.sha }}-node${{ matrix.node }}
           path: |
             dist/index.html
             dist/index.self-extract.html

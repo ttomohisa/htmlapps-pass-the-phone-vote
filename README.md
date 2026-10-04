@@ -22,11 +22,11 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Vote privately on one shared phone** — Each person sees only their own ballot, then hands the phone to the next participant.
 - **Keep intermediate results hidden** — Counts remain hidden until everyone has voted and the result is deliberately revealed.
 - **Do not keep voter-to-choice history** — A confirmed vote increments only the selected option's aggregate count. The app does not store records such as `person 1 → option A`.
-- **Set up common votes quickly** — Start from Yes / No, Either / Or, or a custom vote with 2–10 choices and 2–100 participants.
+- **Set up common votes quickly** — Start from Yes / No, Either / Or, or a custom vote with 2–10 choices and 2–100 participants. Undo an accidental choice deletion or preset replacement before making another edit.
 - **Recover safely after reloads** — `sessionStorage` keeps only aggregate counts and safe progress state. Unconfirmed selections are not written to recovery storage.
 - **Protect against accidental input** — Vote confirmation, handoff, reveal, restart, and stop actions include guards or confirmation where needed.
 - **Reveal only when intended** — Hold the reveal button to open results, with a confirmation-based alternative for users who cannot perform a hold gesture.
-- **Reuse or share aggregate results** — Copy results, use the OS share sheet when supported, or run the same vote again with counts reset.
+- **Keep aggregate results** — Save a UTF-8 `.txt` file with an editable filename, copy results, use the OS share sheet when supported, or run the same vote again with counts reset.
 - **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use.
 - **Fully local single HTML** — No runtime CDN, analytics, telemetry, remote fonts, or application API calls are required.
 
@@ -60,7 +60,7 @@ No runtime third-party library is required by the app itself.
 5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person.
 6. Repeat until everyone has voted.
 7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
-8. Copy or share the aggregate result, vote again with the same setup, or create a new vote.
+8. Edit the result filename and save a `.txt` file, copy or share the aggregate result, vote again with the same setup, or create a new vote.
 
 ### Vote setup
 
@@ -68,10 +68,16 @@ No runtime third-party library is required by the app itself.
 - **Either / Or** starts with two editable choices and remains a two-choice preset until a third choice is added.
 - **Custom** starts from blank custom choices.
 - Duplicate or blank choices are rejected before voting starts.
+- Deleting a choice or replacing choices offers **Undo**. It is available only until a newer setup edit or vote start, so it cannot replace newer work.
+- Enter advances through fields; confirming Japanese or other IME composition leaves focus and choice count unchanged.
 
 ### Result actions
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
+
+**Save result** downloads the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
+
+A reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 
 On supported devices, **Share result** passes the same aggregate text to the operating system's share sheet. The app does not automatically send the result to any remote service.
 
@@ -88,7 +94,9 @@ After voting starts, `sessionStorage` can retain:
 
 An unconfirmed selection is never stored. If a reload happens while someone is selecting or reviewing an answer, that participant returns to the neutral ready screen and votes again.
 
-Stored recovery data is validated before use. Invalid or inconsistent state is discarded rather than shown as a result.
+Stored recovery data is validated before use. Invalid or inconsistent state is rejected rather than shown as a result.
+
+If the browser cannot save recovery data, already-confirmed votes remain counted in the open page. A persistent warning explains that reloading or closing may lose them. The app attempts to remove any older snapshot; if removal also fails, an older snapshot may still be offered after reload. The warning clears only after a current snapshot saves successfully. Keep the page open and save the aggregate result after reveal. Recovery is best-effort, not a durable backup.
 
 ## Publish with GitHub Pages
 
@@ -123,6 +131,8 @@ Build on Windows:
 ```powershell
 .\build-standalone.bat
 ```
+
+Repository checks require Node.js 22 or newer as well as PowerShell. They run behavior tests against source and both generated variants, plus the root download. After a source change, build and copy `dist/index.html` to `pass-the-phone-vote.html` before the final check; CI rejects an outdated root download (only build-time metadata and line endings may differ).
 
 Repository checks:
 
