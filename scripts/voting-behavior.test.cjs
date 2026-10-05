@@ -83,4 +83,130 @@ test('queued return-to-setup focus cannot reach a restored session', async () =>
 test('persistent recovery warning stays inside the mobile workflow scroll target', () => { const app = createApp(filename); assert.ok(warning(app).closest('.app-shell'), 'warning must be included when mobile scroll targets the workflow shell'); });
 for (const language of ['en', 'ja']) for (const action of ['discard', 'abort', 'new']) test(`failed ${action} cleanup is honest in ${language}`, async () => { let app = createApp(filename, { language }); if (action === 'discard') { await start(app); app = createApp(filename, { language, storage: app.storage }); } else if (action === 'new') { await completed(app); app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); } else await start(app); app.controls.failWrite = true; app.controls.failRemove = true; if (action === 'discard') app.el('sessionRecoveryDiscard').click(); else { if (action === 'new') app.el('newVoteButton').click(); else app.document.querySelector('.abort-vote-button').click(); app.el('appConfirmOk').click(); await app.settle(); } assert.equal(state(app), null); assert.equal(app.screen(), 'setupScreen'); assert.equal(warning(app).hidden, false); assert.match(warning(app).textContent, language === 'en' ? /discarded or rejected/ : /破棄・拒否/); assert.match(warning(app).textContent, language === 'en' ? /reappear/ : /古い投票/); });
 for (const kind of ['copy', 'share']) test(`stale ${kind} completion cannot unlock or notify a newer result action`, async () => { const app = createApp(filename); await completed(app); app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); const pending = []; if (kind === 'copy') app.globals.navigator.clipboard.writeText = () => new Promise(resolve => pending.push({ resolve })); else { app.globals.navigator.share = () => new Promise((resolve, reject) => pending.push({ resolve, reject })); app.run('renderResults()'); } const button = app.el(kind === 'copy' ? 'copyResultButton' : 'shareResultButton'); button.click(); const restored = { phase: 'result', state: { ...state(app), question: 'Different result' } }; app.run('restoreVoteSession(' + JSON.stringify(restored) + ')'); button.click(); assert.equal(pending.length, 2); if (kind === 'copy') pending[0].resolve(); else pending[0].reject(new Error('Old share failed')); await app.settle(); assert.equal(app.run('resultActionPending'), true); assert.equal(app.el('appToastMessage').textContent, ''); pending[1].resolve(); await app.settle(); assert.equal(app.run('resultActionPending'), false); if (kind === 'copy') assert.equal(app.el('appToastMessage').textContent, 'Result copied.'); });
+for (const language of ['en', 'ja']) for (const index of [0, 1, 2]) {
+  test(`deleting focused choice ${index + 1} focuses its next survivor or previous last (${language})`, () => {
+    const app = createApp(filename, { language }); setup(app);
+    const remove = app.document.querySelectorAll('.remove-option')[index];
+    remove.focus(); remove.click(); app.frame(50);
+    assert.equal(app.document.activeElement, app.inputs()[Math.min(index, 1)]);
+    assert.ok(app.document.querySelectorAll('input').includes(app.document.activeElement));
+    assert.equal(app.el('appToastAction').hidden, false);
+    app.el('appToastAction').click();
+    assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Pasta', 'Salad']);
+  });
+}
+for (const interruption of ['edit', 'modal', 'restored session']) {
+  test(`queued choice-deletion focus respects ${interruption}`, () => {
+    const app = createApp(filename); setup(app);
+    app.document.querySelectorAll('.remove-option')[1].click();
+    if (interruption === 'edit') { app.input(app.el('questionInput'), 'New question'); app.el('questionInput').focus(); }
+    if (interruption === 'modal') { app.el('helpButton').click(); app.el('closeHelpButton').focus(); }
+    if (interruption === 'restored session') { app.run('restoreVoteSession({phase:"ready",state:{question:"New",options:[{label:"A",votes:0},{label:"B",votes:0}],participants:2,completed:0}})'); app.el('beginVoteButton').focus(); }
+    const expected = app.document.activeElement; app.frame(50);
+    assert.equal(app.document.activeElement, expected);
+  });
+}
+function pasteChoices(app, text) {
+  assert.ok(app.el('choiceListInput'), 'setup provides an editable list textarea');
+  app.el('choiceListDetails').open = true;
+  app.input(app.el('choiceListInput'), text);
+}
+for (const language of ['en', 'ja']) {
+  test(`choice list starts collapsed, uses manual entry, and has localized accessible guidance (${language})`, () => {
+    const app = createApp(filename, { language });
+    assert.ok(app.el('choiceListDetails'), 'setup offers Paste a list');
+    assert.equal(app.el('choiceListDetails').open, false);
+    assert.equal(app.el('choiceListInput').tagName, 'TEXTAREA');
+    assert.equal(app.document.querySelector('label[for="choiceListInput"]').textContent, language === 'en' ? 'One choice per line' : '1行に1つの選択肢');
+    assert.equal(app.el('choiceListInput').getAttribute('aria-describedby'), 'choiceListHelp choiceListError');
+    assert.match(app.el('choiceListHelp').textContent, language === 'en' ? /replace/i : /置き換え/);
+    assert.equal(/clipboard\.read|addEventListener\(['"]paste['"]/.test(app.html), false);
+  });
+  test(`valid choice list trims blank lines, preserves literals and poll settings, and supports Undo (${language})`, () => {
+    const app = createApp(filename, { language }); setup(app);
+    app.el('presetYesNo').click(); const original = app.inputs().map(input => input.value);
+    const question = app.el('questionInput').value, participants = app.el('participantCount').value;
+    pasteChoices(app, ' \r\n  <b>Rice</b>  \r\n\r\n パスタ 🍝 \n  "Soup, salad"\r');
+    app.el('applyChoiceListButton').click(); app.frame(50);
+    assert.deepEqual(app.inputs().map(input => input.value), ['<b>Rice</b>', 'パスタ 🍝', '"Soup, salad"']);
+    assert.equal(app.run('selectedPreset'), 'custom');
+    assert.equal(app.el('questionInput').value, question); assert.equal(app.el('participantCount').value, participants);
+    assert.equal(app.document.activeElement, app.inputs()[0]);
+    assert.equal(app.el('choiceListInput').value, ''); assert.equal(app.el('choiceListDetails').open, false);
+    assert.equal(app.storage.size, 0); assert.equal(state(app), null);
+    app.el('applyChoiceListButton').click(); // An already queued second action cannot replace the Undo.
+    app.el('appToastAction').click();
+    assert.deepEqual(app.inputs().map(input => input.value), original); assert.equal(app.run('selectedPreset'), 'yesno');
+    assert.equal(app.el('choiceListInput').value, '');
+  });
+  for (const [name, text, error] of [
+    ['empty', ' \n\t\r\n', 'choiceRange'], ['one', 'A', 'choiceRange'],
+    ['eleven', Array.from({ length: 11 }, (_, i) => String(i)).join('\n'), 'choiceRange'],
+    ['duplicate', ' Rice \n rICE ', 'choiceDuplicate'], ['overlong', 'x'.repeat(81) + '\nB', 'choiceListTooLong'],
+    ['emoji overlong', '🐈'.repeat(40) + 'a\nB', 'choiceListTooLong'],
+    ['comma separated', 'Rice,Pasta,Salad', 'choiceRange'],
+  ]) test(`invalid ${name} list is rejected atomically with field-local error (${language})`, () => {
+    const app = createApp(filename, { language }); setup(app);
+    const before = app.run('setupSignature()'); pasteChoices(app, text);
+    const options = app.inputs(); app.el('applyChoiceListButton').click();
+    assert.deepEqual(app.inputs(), options); assert.equal(app.run('setupSignature()'), before);
+    assert.equal(app.el('choiceListInput').value, text); assert.equal(app.el('choiceListInput').getAttribute('aria-invalid'), 'true');
+    assert.equal(app.el('choiceListError').hidden, false); assert.equal(app.el('choiceListError').textContent, app.run(`t('${error}')`));
+    assert.equal(app.document.activeElement, app.el('choiceListInput')); assert.equal(app.storage.size, 0); assert.equal(state(app), null);
+  });
+}
+for (const labels of [['A', 'B'], Array.from({ length: 10 }, (_, index) => index === 0 ? '🐈'.repeat(40) : String(index))]) {
+  test(`choice list accepts ${labels.length} entries at exact limits`, () => {
+    const app = createApp(filename); setup(app); pasteChoices(app, labels.join('\n')); app.el('applyChoiceListButton').click();
+    assert.deepEqual(app.inputs().map(input => input.value), labels); assert.equal(app.el('choiceListError').hidden, true);
+  });
+}
+test('editing a list draft invalidates older setup Undo without applying it', () => {
+  const app = createApp(filename); setup(app); app.document.querySelectorAll('.remove-option')[1].click();
+  pasteChoices(app, 'A\nB'); app.el('appToastAction').click();
+  assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Salad']); assert.equal(app.el('appToastAction').hidden, true);
+});
+test('invalid-list correction clears the field error and language switches translate it without changing the draft', () => {
+  const app = createApp(filename); setup(app); pasteChoices(app, 'A'); app.el('applyChoiceListButton').click();
+  app.el('languageButton').click(); assert.equal(app.el('choiceListInput').value, 'A');
+  assert.equal(app.el('choiceListError').textContent, app.run("t('choiceRange')"));
+  pasteChoices(app, 'A\nB'); assert.equal(app.el('choiceListInput').getAttribute('aria-invalid'), null); assert.equal(app.el('choiceListError').hidden, true);
+});
+test('list draft is not saved on reload and is cleared when voting starts or a session is restored', async () => {
+  const app = createApp(filename); setup(app); pasteChoices(app, 'Unapplied\nDraft');
+  assert.equal(app.storage.size, 0); const reload = createApp(filename, { storage: app.storage }); assert.equal(reload.el('choiceListInput').value, '');
+  app.el('startVoteButton').click(); app.el('appConfirmCancel').click(); await app.settle();
+  assert.equal(app.el('choiceListInput').value, 'Unapplied\nDraft');
+  app.el('startVoteButton').click(); app.el('appConfirmOk').click(); await app.settle();
+  assert.equal(app.screen(), 'readyScreen'); assert.equal(app.el('choiceListInput').value, ''); assert.equal(app.el('choiceListDetails').open, false);
+  assert.ok(!app.storage.get(key).includes('Unapplied')); assert.deepEqual(state(app).options.map(option => option.label), ['Rice', 'Pasta', 'Salad']);
+  app.run('returnToSetupFromCurrentState()'); pasteChoices(app, 'Private draft\nNot a vote');
+  app.run('restoreVoteSession({phase:"ready",state:{question:"Saved",options:[{label:"A",votes:0},{label:"B",votes:0}],participants:2,completed:0}})');
+  assert.equal(app.el('choiceListInput').value, ''); assert.equal(app.el('choiceListDetails').open, false);
+});
+test('new list edits invalidate a pending start confirmation', async () => {
+  const app = createApp(filename); setup(app); app.el('startVoteButton').click(); pasteChoices(app, 'A\nB');
+  app.el('applyChoiceListButton').click(); assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Pasta', 'Salad']);
+  app.el('appConfirmOk').click(); await app.settle(); assert.equal(app.screen(), 'setupScreen'); assert.equal(state(app), null);
+});
+for (const interruption of ['edit', 'modal', 'restored session']) test(`queued list-apply focus respects ${interruption}`, () => {
+  const app = createApp(filename); setup(app); pasteChoices(app, 'A\nB'); app.el('applyChoiceListButton').click();
+  if (interruption === 'edit') { app.input(app.el('questionInput'), 'New question'); app.el('questionInput').focus(); }
+  if (interruption === 'modal') { app.el('helpButton').click(); app.el('closeHelpButton').focus(); }
+  if (interruption === 'restored session') { app.run('restoreVoteSession({phase:"ready",state:{question:"New",options:[{label:"A",votes:0},{label:"B",votes:0}],participants:2,completed:0}})'); app.el('beginVoteButton').focus(); }
+  const expected = app.document.activeElement; app.frame(50); assert.equal(app.document.activeElement, expected);
+});
+test('applying a list is blocked outside setup and while a dialog is open', async () => {
+  const app = createApp(filename); setup(app); pasteChoices(app, 'A\nB'); app.el('helpButton').click(); app.el('applyChoiceListButton').click();
+  assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Pasta', 'Salad']); app.el('closeHelpButton').click();
+  app.el('startVoteButton').click(); app.el('appConfirmOk').click(); await app.settle();
+  pasteChoices(app, 'Different\nOptions'); app.el('applyChoiceListButton').click(); assert.deepEqual(state(app).options.map(option => option.label), ['Rice', 'Pasta', 'Salad']);
+});
+test('list textarea Enter and IME Enter stay in the draft without changing choices', () => {
+  const app = createApp(filename); setup(app); pasteChoices(app, 'A'); const input = app.el('choiceListInput'); input.focus();
+  for (const extra of [{}, { isComposing: true }, { keyCode: 229 }]) {
+    const event = input.dispatch('keydown', { key: 'Enter', ...extra });
+    assert.equal(event.defaultPrevented, false); assert.equal(app.document.activeElement, input); assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Pasta', 'Salad']);
+  }
+});
 (async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();

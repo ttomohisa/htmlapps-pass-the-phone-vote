@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added optional multiline choice-list entry with atomic validation, localized guidance/errors, guarded Undo, and no draft persistence or automatic clipboard access.
+- Fixed keyboard focus falling out of the live choice list after removing a row; queued focus respects newer edits, screens, and dialogs.
+
 - Added UTF-8 aggregate-result `.txt` downloads with an editable safe filename, using the same text as Copy/Share.
 - Added temporary setup Undo for choice deletion and preset replacement, guarded against newer edits and vote/session changes.
 - Fixed interrupted reveal holds, including brief Space+Tab, lost focus, hidden pages, pointer cancellation, and stale animation callbacks.
