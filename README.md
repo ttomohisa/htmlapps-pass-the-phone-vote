@@ -67,8 +67,11 @@ No runtime third-party library is required by the app itself.
 - **Yes / No** fills the two standard answers automatically.
 - **Either / Or** starts with two editable choices and remains a two-choice preset until a third choice is added.
 - **Custom** starts from blank custom choices.
+- **Paste a list** opens an optional, initially collapsed text area. Type or paste one choice per line, then choose **Replace choices**. Blank lines are ignored and surrounding whitespace is trimmed; 2–10 unique choices of up to 80 characters each are required. Invalid entries leave every current choice unchanged.
+- Applying a list selects **Custom**, preserves the question and participant count, and offers **Undo**. The unapplied draft is never saved; it is cleared after applying or leaving setup. This does not read the clipboard automatically or import files.
 - Duplicate or blank choices are rejected before voting starts.
 - Deleting a choice or replacing choices offers **Undo**. It is available only until a newer setup edit or vote start, so it cannot replace newer work.
+- Removing a choice moves keyboard focus to the next remaining choice, or the previous choice when removing the last row.
 - Enter advances through fields; confirming Japanese or other IME composition leaves focus and choice count unchanged.
 
 ### Result actions

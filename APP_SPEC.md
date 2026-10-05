@@ -33,6 +33,10 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Either / Or remains selected while editing its two labels and switches to Custom only when the choice count is expanded.
 - Enter moves from the question into choices and through choice fields. Enter used to confirm IME composition must not navigate or add a choice.
 - Deleting a choice or replacing choices with a preset offers a temporary Undo. Undo restores only that still-current setup edit; any subsequent setup edit, vote start, reset, or session restoration invalidates it.
+- Removing a choice keeps keyboard focus in the live choice list: the next surviving choice is focused, or the previous choice when removing the last row. Deferred focus must respect newer setup edits, screen changes, and open dialogs.
+- Optional “Paste a list” setup section starts collapsed. Manually paste/type one choice per line; trim entries and ignore blank lines. Applying validates the whole list (2–10 distinct choices, case-insensitive like existing setup, at most 80 UTF-16 code units each) before replacing any choice.
+- Applying switches to Custom, preserves the question and participant count, offers the existing guarded Undo, clears/collapses the draft, and focuses the first choice. Invalid input stays editable with a localized field error; existing choices remain untouched.
+- The list draft is ephemeral: never write it to recovery or persistent storage, and clear it when leaving setup. Draft edits invalidate earlier setup Undo and pending setup confirmation. No automatic clipboard read, file import, delimiter detection, truncation, or deduplication is performed.
 - Starting a vote requires a final summary confirmation showing the question, participant count, and choices.
 - Validation rejects empty or duplicate choices before the confirmation step.
 
