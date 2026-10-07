@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 1.0.1: Standardized the header language control to EN / JA with localized target-language labels and tooltips; kept Help / Close labels and tooltips localized. Added repeated-switch regression coverage.
+
 - Added optional multiline choice-list entry with atomic validation, localized guidance/errors, guarded Undo, and no draft persistence or automatic clipboard access.
 - Fixed keyboard focus falling out of the live choice list after removing a row; queued focus respects newer edits, screens, and dialogs.
 

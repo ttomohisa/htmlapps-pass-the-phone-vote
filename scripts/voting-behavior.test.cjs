@@ -209,4 +209,30 @@ test('list textarea Enter and IME Enter stay in the draft without changing choic
     assert.equal(event.defaultPrevented, false); assert.equal(app.document.activeElement, input); assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Pasta', 'Salad']);
   }
 });
+for (const initialLanguage of ['en', 'ja']) test(`header language controls stay localized from ${initialLanguage} across repeated switches`, () => {
+  const app = createApp(filename, { language: initialLanguage });
+  setup(app, ['A', '投票 B'], 3);
+  for (let index = 0; index < 5; index++) {
+    const language = app.document.documentElement.lang;
+    const target = language === 'ja' ? '英語に切り替え' : 'Switch to Japanese';
+    const button = app.el('languageButton');
+    assert.equal(button.textContent, language === 'ja' ? 'EN' : 'JA');
+    assert.equal(button.getAttribute('aria-label'), target);
+    assert.equal(button.title, target);
+    for (const [id, expected] of [['helpButton', language === 'ja' ? '使い方と注意事項' : 'How to use & notes'], ['closeHelpButton', language === 'ja' ? '閉じる' : 'Close']]) {
+      assert.equal(app.el(id).getAttribute('aria-label'), expected);
+      assert.equal(app.el(id).title, expected);
+    }
+    assert.equal(app.document.querySelector('[data-i18n="localBadge"]').textContent, language === 'ja' ? '完全ローカル処理' : 'Fully local processing');
+    assert.deepEqual(app.inputs().map(input => input.value), ['A', '投票 B']);
+    assert.equal(app.el('participantCount').value, '3');
+    app.el('helpButton').click();
+    assert.equal(app.el('helpDialog').open, true);
+    app.el('closeHelpButton').click();
+    assert.equal(app.el('helpDialog').open, false);
+    button.click();
+    assert.equal(app.document.documentElement.lang, language === 'ja' ? 'en' : 'ja');
+  }
+});
+
 (async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();

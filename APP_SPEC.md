@@ -4,7 +4,7 @@
 
 - **Name:** Pass-the-Phone Vote
 - **Japanese name:** スマホ回し投票
-- **Version:** 1.0.0
+- **Version:** 1.0.1
 - **One-sentence purpose:** One phone is passed around for a private in-person vote, and only the final aggregate result is revealed after everyone has voted.
 - **Primary users:** Families, friends, small teams, classrooms, workshops, and other co-located small groups.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`
@@ -90,6 +90,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Reloading while a participant is selecting or confirming an answer must resume at the neutral ready screen without persisting that unconfirmed answer.
 - Completed-but-unrevealed and already-revealed sessions may also be restored safely.
 - Japanese and English switch without reloading.
+- The header language button shows `EN` in Japanese and `JA` in English, with localized target-language accessible names and tooltips. Help and its Close button expose localized accessible names and tooltips.
 - Runtime network access is blocked.
 
 ## 5. Data and privacy
