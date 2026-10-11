@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Clarify Japanese and English help by removing internal layout, implementation, and audit commentary while preserving usage guidance and cautions.
+
+## Unreleased
+
 - 1.0.2: Paused root/body background scrolling while Help, confirmation, or recovery is modal. Bounded confirmation/recovery shells keep their headers visible and let their bodies scroll through both actions on short screens, preserving existing forced-recovery decisions and vote state. Added bilingual Help/docs and source/readable/self-extract/root modal regressions. Prevented Escape from silently dismissing reload recovery before Continue/Discard, including non-cancelable native close requests, with a recovery-only Escape fallback and bilingual decision regressions.
 
 - 1.0.1: Standardized the header language control to EN / JA with localized target-language labels and tooltips; kept Help / Close labels and tooltips localized. Added repeated-switch regression coverage.
