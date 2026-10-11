@@ -20,7 +20,7 @@ function createApp(filename, options = {}) {
     addEventListener(type, fn, opts = {}) { const list = this.listeners.get(type) || []; list.push({ fn, once: opts.once }); this.listeners.set(type, list); }
     removeEventListener(type, fn) { this.listeners.set(type, (this.listeners.get(type) || []).filter(item => item.fn !== fn)); }
     dispatch(type, extra = {}) {
-      const event = { type, target: this, currentTarget: this, key: '', button: 0, pointerId: 1, isPrimary: true, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, ...extra };
+      const event = { type, target: this, currentTarget: this, key: '', button: 0, pointerId: 1, isPrimary: true, cancelable: true, defaultPrevented: false, preventDefault() { if (this.cancelable) this.defaultPrevented = true; }, ...extra };
       for (const item of [...(this.listeners.get(type) || [])]) { item.fn(event); if (item.once) this.removeEventListener(type, item.fn); }
       if (this['on' + type]) this['on' + type](event);
       // Keyboard events reach capture/bubble listeners on document/window even after focus moves.
