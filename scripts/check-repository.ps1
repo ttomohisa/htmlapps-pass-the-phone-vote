@@ -60,6 +60,14 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "Node.js 22 o
 if ($LASTEXITCODE -ne 0) { throw "Voting source behavior regression failed." }
 & node --test (Join-Path $Root "scripts\voting-packaging.test.cjs")
 if ($LASTEXITCODE -ne 0) { throw "Voting release packaging regression failed." }
+$previousVoteModalSource = $env:PASS_THE_PHONE_VOTE_SOURCE
+try {
+  $env:PASS_THE_PHONE_VOTE_SOURCE = "src/index.template.html"
+  & node --test (Join-Path $Root "scripts\voting-modal-layout.test.cjs")
+  if ($LASTEXITCODE -ne 0) { throw "Voting source modal regression failed." }
+} finally {
+  $env:PASS_THE_PHONE_VOTE_SOURCE = $previousVoteModalSource
+}
 
 $mobileBottomBarPath = Join-Path $Root "components\mobile-bottom-bar.html"
 $mobileBottomBarText = Get-Content -Raw -Encoding UTF8 $mobileBottomBarPath
@@ -240,9 +248,17 @@ $buildArguments = @{}
 if ($ForceDownload) { $buildArguments.ForceDownload = $true }
 & (Join-Path $Root "build-standalone.ps1") @buildArguments
 
-foreach ($variant in @("dist\index.html", "dist\index.self-extract.html", "pass-the-phone-vote.html")) {
-  & node (Join-Path $Root "scripts\voting-behavior.test.cjs") (Join-Path $Root $variant)
-  if ($LASTEXITCODE -ne 0) { throw "Voting behavior regression failed: $variant" }
+$previousVoteModalSource = $env:PASS_THE_PHONE_VOTE_SOURCE
+try {
+  foreach ($variant in @("dist\index.html", "dist\index.self-extract.html", "pass-the-phone-vote.html")) {
+    & node (Join-Path $Root "scripts\voting-behavior.test.cjs") (Join-Path $Root $variant)
+    if ($LASTEXITCODE -ne 0) { throw "Voting behavior regression failed: $variant" }
+    $env:PASS_THE_PHONE_VOTE_SOURCE = (Join-Path $Root $variant)
+    & node --test (Join-Path $Root "scripts\voting-modal-layout.test.cjs")
+    if ($LASTEXITCODE -ne 0) { throw "Voting modal regression failed: $variant" }
+  }
+} finally {
+  $env:PASS_THE_PHONE_VOTE_SOURCE = $previousVoteModalSource
 }
 & node (Join-Path $Root "scripts\verify-release-alias.cjs")
 if ($LASTEXITCODE -ne 0) { throw "Root download parity check failed." }

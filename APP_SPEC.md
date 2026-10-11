@@ -4,7 +4,7 @@
 
 - **Name:** Pass-the-Phone Vote
 - **Japanese name:** スマホ回し投票
-- **Version:** 1.0.1
+- **Version:** 1.0.2
 - **One-sentence purpose:** One phone is passed around for a private in-person vote, and only the final aggregate result is revealed after everyone has voted.
 - **Primary users:** Families, friends, small teams, classrooms, workshops, and other co-located small groups.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`
@@ -128,6 +128,9 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - All controls have visible labels or accessible names and visible focus states.
 - Motion respects `prefers-reduced-motion`.
 - Help remains scrollable on narrow/short smartphone screens.
+- While any native modal dialog is open (Help, confirmation, or session recovery), root/body page scrolling is paused. Closing the last modal restores normal page scrolling without changing vote state.
+- Confirmation and recovery use a bounded open-only flex shell with a non-shrinking header and a scrolling body containing the message and both action buttons. Preserve the existing message scroll cap, mobile bottom-sheet presentation, and safe-area padding.
+- Recovery still requires Continue or Discard; Escape and backdrop do not dismiss it. Help and ordinary confirmations retain their existing dismissal behavior.
 
 ## 8. Performance expectations
 
@@ -186,6 +189,9 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - At widths up to 420px, long result labels and their scores stack rather than collide.
 - At mobile heights around 568–700px, handoff/reveal screens remain usable without oversized blank space.
 - Mobile confirmation/help dialogs account for bottom safe-area inset and remain scrollable.
+- At 393 × 252 CSS pixels, confirmation and recovery bodies scroll far enough to reach both actions, including long questions and choice lists; their headers remain visible.
+- Outside-wheel and keyboard scrolling do not move the background page while Help, confirmation, or recovery is modal. Help text still scrolls to the final note; closing the modal restores page scrolling.
+- Dependency-free modal regressions run against the source template, readable build, decoded self-extract payload, and root download; native viewport, wheel, and keyboard checks remain required.
 - Secondary reveal/stop controls retain low visual emphasis while providing at least a 44px touch target.
 - Participant decrement/increment/count controls switch accessible names with the selected UI language.
 
