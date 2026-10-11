@@ -69,25 +69,112 @@ test('confirmation and recovery bodies scroll through both existing actions', ()
   }
 });
 
-test('recovery still requires an explicit Continue or Discard decision', async () => {
-  const previous = createApp(filename);
-  previous.input(previous.el('questionInput'), 'Synthetic recovery');
-  previous.inputs().forEach((input, index) => previous.input(input, `Choice ${index + 1}`));
-  previous.el('startVoteButton').click();
-  previous.el('appConfirmOk').click();
-  await previous.settle();
-  assert.equal(previous.screen(), 'readyScreen');
+const recoveryKey = 'pass-the-phone-vote:vote-session:v1';
+async function oneVoteSession(language = 'en') {
+  const app = createApp(filename, { language });
+  app.input(app.el('questionInput'), 'Synthetic recovery');
+  app.inputs().forEach((input, index) => app.input(input, `Choice ${index + 1}`));
+  app.input(app.el('participantCount'), '2');
+  app.el('startVoteButton').click();
+  app.el('appConfirmOk').click();
+  await app.settle();
+  app.el('beginVoteButton').click();
+  app.el('voteOptions').children[0].click();
+  app.el('confirmVoteButton').click();
+  assert.equal(app.screen(), 'handoffScreen');
+  assert.equal(JSON.parse(app.storage.get(recoveryKey)).state.completed, 1);
+  return app;
+}
 
-  for (const action of ['sessionRecoveryContinue', 'sessionRecoveryDiscard']) {
-    const app = createApp(filename, { storage: previous.storage });
+// Model native default actions after running the actual application listeners.
+// Close requests can be non-cancelable; this does not substitute for browser QA.
+function platformCloseRequest(dialog, { closedBySupported = true, cancelable = true } = {}) {
+  if (!dialog.open || (closedBySupported && dialog.getAttribute('closedby') === 'none')) return;
+  const cancel = dialog.dispatch('cancel', { cancelable });
+  if (!cancel.defaultPrevented && dialog.open) dialog.close();
+  return cancel;
+}
+function pressEscape(dialog, options) {
+  const keydown = dialog.dispatch('keydown', { key: 'Escape' });
+  if (!keydown.defaultPrevented) platformCloseRequest(dialog, options);
+  return keydown;
+}
+
+for (const language of ['en', 'ja']) {
+  test(`recovery requires an explicit Continue or Discard decision in ${language}`, async () => {
+    const previous = await oneVoteSession(language);
+    for (const action of ['sessionRecoveryContinue', 'sessionRecoveryDiscard']) {
+      const app = createApp(filename, { language, storage: previous.storage });
+      const dialog = app.el('sessionRecoveryDialog');
+      const saved = app.storage.get(recoveryKey);
+      assert.equal(dialog.open, true);
+      assert.equal(dialog.dispatch('cancel').defaultPrevented, true);
+      assert.equal(dialog.dispatch('cancel', { cancelable: false }).defaultPrevented, false);
+      dialog.dispatch('click', { clientX: -1, clientY: -1 });
+      assert.equal(dialog.open, true);
+      assert.equal(app.screen(), 'setupScreen');
+      assert.equal(app.storage.get(recoveryKey), saved);
+      app.el(action).click();
+      assert.equal(dialog.open, false);
+      if (action === 'sessionRecoveryContinue') {
+        assert.equal(app.screen(), 'handoffScreen');
+        assert.equal(app.run('state.completed'), 1);
+        assert.equal(app.run('state.options[0].votes'), 1);
+        assert.equal(app.storage.get(recoveryKey), saved);
+      } else {
+        assert.equal(app.screen(), 'setupScreen');
+        assert.equal(app.run('state'), null);
+        assert.equal(app.storage.has(recoveryKey), false);
+      }
+    }
+  });
+
+  test(`recovery rejects repeated platform close requests without activation in ${language}`, async () => {
+    const previous = await oneVoteSession(language);
+    const app = createApp(filename, { language, storage: previous.storage });
     const dialog = app.el('sessionRecoveryDialog');
-    assert.equal(dialog.open, true);
-    assert.equal(dialog.dispatch('cancel').defaultPrevented, true);
-    dialog.dispatch('click', { clientX: -1, clientY: -1 });
-    assert.equal(dialog.open, true);
-    assert.equal(app.screen(), 'setupScreen');
-    app.el(action).click();
+    const saved = app.storage.get(recoveryKey);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      platformCloseRequest(dialog, { cancelable: false });
+      assert.equal(dialog.open, true);
+      assert.equal(app.run('state'), null);
+      assert.equal(app.storage.get(recoveryKey), saved);
+    }
+    app.el('sessionRecoveryContinue').click();
+    assert.equal(app.screen(), 'handoffScreen');
+    assert.equal(app.run('state.completed'), 1);
+  });
+
+  test(`recovery Escape fallback blocks dismissal when closedby is unsupported in ${language}`, async () => {
+    const previous = await oneVoteSession(language);
+    const app = createApp(filename, { language, storage: previous.storage });
+    const dialog = app.el('sessionRecoveryDialog');
+    const saved = app.storage.get(recoveryKey);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const keydown = pressEscape(dialog, { closedBySupported: false, cancelable: false });
+      assert.equal(keydown.defaultPrevented, true);
+      assert.equal(dialog.open, true);
+      assert.equal(app.run('state'), null);
+      assert.equal(app.storage.get(recoveryKey), saved);
+    }
+    assert.equal(dialog.dispatch('keydown', { key: 'Tab' }).defaultPrevented, false);
+    assert.equal(dialog.dispatch('keydown', { key: 'Enter' }).defaultPrevented, false);
+    app.el('sessionRecoveryDiscard').click();
     assert.equal(dialog.open, false);
-    assert.equal(app.screen(), action === 'sessionRecoveryContinue' ? 'readyScreen' : 'setupScreen');
+    assert.equal(app.storage.has(recoveryKey), false);
+  });
+
+  for (const cancelable of [true, false]) {
+    test(`Help and ordinary confirmation retain Escape dismissal in ${language}, cancelable=${cancelable}`, async () => {
+      const app = createApp(filename, { language });
+      app.el('helpButton').click();
+      pressEscape(app.el('helpDialog'), { cancelable });
+      assert.equal(app.el('helpDialog').open, false);
+      const result = app.run("AppConfirm.ask({title:'Synthetic confirm',message:'Cancel safely'})");
+      pressEscape(app.el('appConfirmDialog'), { cancelable });
+      assert.equal(app.el('appConfirmDialog').open, false);
+      assert.equal(await result, false);
+      assert.equal(app.screen(), 'setupScreen');
+    });
   }
-});
+}

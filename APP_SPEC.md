@@ -130,7 +130,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Help remains scrollable on narrow/short smartphone screens.
 - While any native modal dialog is open (Help, confirmation, or session recovery), root/body page scrolling is paused. Closing the last modal restores normal page scrolling without changing vote state.
 - Confirmation and recovery use a bounded open-only flex shell with a non-shrinking header and a scrolling body containing the message and both action buttons. Preserve the existing message scroll cap, mobile bottom-sheet presentation, and safe-area padding.
-- Recovery still requires Continue or Discard; Escape and backdrop do not dismiss it. Help and ordinary confirmations retain their existing dismissal behavior.
+- Recovery still requires Continue or Discard; Escape and backdrop do not dismiss it. Help and ordinary confirmations retain their existing dismissal behavior. Native recovery close requests are disabled with `closedby="none"`; a recovery-scoped Escape keydown guard supports older browsers, while the existing cancel guard remains. No vote/session state is changed until an explicit decision.
 
 ## 8. Performance expectations
 
@@ -175,6 +175,7 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - Yes / No → Custom clears the preset labels instead of carrying them into Custom.
 - Either / Or remains active while editing two labels, and adding a third choice switches the preset indicator to Custom.
 - Reload after one or more confirmed votes offers Continue / Discard and restores the exact aggregate counts.
+- After reloading a 1-of-2 vote, repeated Escape leaves recovery open and the snapshot unchanged, including when a native close request would be non-cancelable. Continue restores 1/2; only explicit Discard attempts to clear the snapshot. Help and ordinary confirmations still close on Escape.
 - Reload from the vote or confirmation screen never stores or restores the unconfirmed choice.
 - Corrupt or inconsistent recovery data is rejected and removed when storage allows it; cleanup failure is disclosed.
 - Discarding recovery attempts to remove the `sessionStorage` snapshot and returns to setup; if removal fails, the app clearly warns that the old snapshot may reappear.
