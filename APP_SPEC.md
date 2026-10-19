@@ -4,7 +4,7 @@
 
 - **Name:** Pass-the-Phone Vote
 - **Japanese name:** スマホ回し投票
-- **Version:** 1.0.2
+- **Version:** 1.0.3
 - **One-sentence purpose:** One phone is passed around for a private in-person vote, and only the final aggregate result is revealed after everyone has voted.
 - **Primary users:** Families, friends, small teams, classrooms, workshops, and other co-located small groups.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`
@@ -26,6 +26,16 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Live state is integrity-checked before critical transitions and before a recovery snapshot is written.
 - Invalid live state fails closed: recovery data is cleared, private answer UI is removed, and the app returns to setup without exposing intermediate tallies.
 - An in-progress vote can be stopped from voting screens only through a destructive confirmation dialog. The current question, choices, and participant count are retained for editing, but confirmed counts are discarded.
+
+### Private pause and screen transitions
+
+- When the active vote or revealed result loses window focus, becomes hidden, or is leaving the page, replace it with a neutral privacy screen. Do not resume automatically when focus or visibility returns.
+- Switching away within the same live page keeps the current unconfirmed selection only in memory and removes its displayed answer and choice buttons. Explicit Resume restores the same participant's unfinished screen without adding a vote.
+- The pause retains the originating screen and session identity, cancels reveal gestures and ordinary confirmations/Help, and rejects stale asynchronous work and detached choice buttons. Repeated blur/hidden events never overwrite the originating screen.
+- Browser Back or page exit discards any unconfirmed choice and makes the paused target the same participant's neutral ready screen. BFCache return stays masked until Resume. Reload recovery retains its existing Continue/Discard flow and stores only the underlying safe aggregate phase, never the curtain or an unfinished choice.
+- The curtain applies after voting starts, including revealed results. Setup and the explicit reload-recovery decision retain their existing behavior. This is a local visual precaution, not authentication or a guarantee against operating-system app-switcher previews/screenshots.
+- Screen transitions focus the new screen's heading, never a consequential action. Queued focus must respect newer screens, newer user focus, open dialogs, and hidden/unfocused documents. Deferred mobile scroll must respect newer screens, open dialogs, and hidden documents. Broad/private live regions must not queue selected-answer announcements.
+- Translation interpolation substitutes each original placeholder once using a literal callback. User-provided dollar signs, braces, markup-like strings, and translation-token-shaped text remain unchanged.
 
 ### Vote setup improvements
 
@@ -101,7 +111,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Individual confirmed votes are not stored.
 - An explicitly downloaded result file contains only the same aggregate text shown after reveal. The user controls where they keep or share that local file; downloads do not upload to a service.
 - Language preference is stored in `localStorage`; vote-session recovery uses `sessionStorage`.
-- The recovery snapshot never contains `pendingChoiceIndex`, voter names, or a voter-to-choice record.
+- The recovery snapshot never contains `pendingChoiceIndex`, the privacy pause record, voter names, or a voter-to-choice record.
 - Reloading from the vote or confirmation screen resumes from the neutral ready screen for the same participant, so an unconfirmed choice is discarded rather than persisted.
 - There is no server-side storage, login, analytics, telemetry, or tracking.
 
@@ -115,6 +125,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 ## 7. UX and accessibility
 
 - Smartphone-first responsive layout from 320px upward; desktop remains supported.
+- The build-information section and page footer are hidden at the existing smartphone breakpoint (680px and below), and remain available at wider widths.
 - Mobile primary actions use at least 48px height, while secondary touch targets are at least 44px even when visually subdued.
 - Header/help/confirmation controls respect mobile safe areas and remain reachable on short-height screens.
 - Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling.
@@ -195,6 +206,13 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - Dependency-free modal regressions run against the source template, readable build, decoded self-extract payload, and root download; native viewport, wheel, and keyboard checks remain required.
 - Secondary reveal/stop controls retain low visual emphasis while providing at least a 44px touch target.
 - Participant decrement/increment/count controls switch accessible names with the selected UI language.
+
+- Blur/hide from ready, ballot, confirmation, handoff, reveal, or result shows only the neutral privacy screen; returning alone never resumes.
+- Pausing an unconfirmed answer clears its displayed text/buttons, keeps its index only in memory, blocks hidden/queued controls, and restores the same answer only after visible/focused explicit Resume. Confirming afterward counts it exactly once.
+- Back, pagehide/BFCache, and fresh reload never restore an unfinished answer automatically; handoff/reveal/result snapshots keep their correct safe phase.
+- Late confirmations, detached old choice buttons, stale reveal frames, and stale focus callbacks cannot cross a pause/session boundary.
+- Both languages preserve a recovery question containing `$&`, `$$`, `$'`, dollar-backtick, `{done}`, `{total}`, `{question}`, and markup-like text literally.
+- New screen headings receive intentional focus without activating Confirm/Resume, stealing newer user focus, moving behind a modal, or reviving a previous participant's screen.
 
 ## 11. Planned milestones
 

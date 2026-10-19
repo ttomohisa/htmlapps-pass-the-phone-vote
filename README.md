@@ -15,7 +15,7 @@ A single-HTML voting tool for passing one phone around a group, letting each per
 
 GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temporary session recovery, tallying, and result display are processed locally on your device. Vote data is not sent to a server by the app.
 
-[![Pass-the-Phone Vote screenshot](assets/screenshot-en.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
+[![Pass-the-Phone Vote v1.0.3 English setup screen](assets/screenshot-en.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
 
 ## Features
 
@@ -24,11 +24,13 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Do not keep voter-to-choice history** — A confirmed vote increments only the selected option's aggregate count. The app does not store records such as `person 1 → option A`.
 - **Set up common votes quickly** — Start from Yes / No, Either / Or, or a custom vote with 2–10 choices and 2–100 participants. Undo an accidental choice deletion or preset replacement before making another edit.
 - **Recover safely after reloads** — `sessionStorage` keeps only aggregate counts and safe progress state. Unconfirmed selections are not written to recovery storage.
+- **Pause privately when switching away** — Voting and result screens are hidden when the page loses focus or is backgrounded. Press Resume screen to continue; an unfinished choice stays only in this open page’s memory. Back or reload requires choosing again. Device app-switcher previews and screenshots cannot be guaranteed private.
+- **Follow the current screen with the keyboard** — Each new voting screen focuses its heading, so you can read the context before moving to its controls.
 - **Protect against accidental input** — Vote confirmation, handoff, reveal, restart, and stop actions include guards or confirmation where needed.
 - **Reveal only when intended** — Hold the reveal button to open results, with a confirmation-based alternative for users who cannot perform a hold gesture.
 - **Keep aggregate results** — Save a UTF-8 `.txt` file with an editable filename, copy results, use the OS share sheet when supported, or run the same vote again with counts reset.
 - **Keep dialogs usable on short screens** — Help, confirmation, and recovery pause background page scrolling until dismissed. Scroll inside Help or the confirmation/recovery body to reach its content and actions. Recovery stays open on Escape or backdrop clicks; choose Continue or Discard.
-- **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use.
+- **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use. Build information and the footer stay out of the way at phone widths (680px and below).
 - **Fully local single HTML** — No runtime CDN, analytics, telemetry, remote fonts, or application API calls are required.
 
 ## Quick start

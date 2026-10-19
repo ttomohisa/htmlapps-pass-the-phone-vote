@@ -44,7 +44,7 @@ const interruptions = {
   'history navigation': app => app.window.dispatch('popstate'),
   'pagehide': app => app.window.dispatch('pagehide'),
 };
-for (const [name, interrupt] of Object.entries(interruptions)) test(`hold canceled by ${name}, including an already queued callback`, async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); const stale = [...app.frames.values()][0]; interrupt(app); stale(1500); app.frame(3000); hidden(app); });
+for (const [name, interrupt] of Object.entries(interruptions)) test(`hold canceled by ${name}, including an already queued callback`, async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); const stale = [...app.frames.values()][0]; interrupt(app); stale(1500); app.frame(3000); if(['window blur','hidden page','pagehide'].includes(name)){assert.equal(app.screen(),'privacyScreen');assert.equal(app.el('resultList').children.length,0);app.el('privacyResumeButton').click()}hidden(app); });
 for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) test(`pointer hold canceled by ${event}`, async () => { const app = createApp(filename); await completed(app); app.frame(100); app.el('revealButton').dispatch('pointerdown', { pointerId: 7 }); const stale = [...app.frames.values()][0]; app.el('revealButton').dispatch(event, { pointerId: 7 }); stale(2000); hidden(app); });
 test('stale frame cannot advance a newer reveal gesture', async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); const stale = [...app.frames.values()][0]; app.el('revealButton').dispatch('keyup', { key: ' ' }); app.frame(200); hold(app); stale(9999); hidden(app); app.frame(1399); hidden(app); app.frame(1400); assert.equal(app.screen(), 'resultScreen'); });
 test('unrelated pointer/key releases do not complete or cancel the held gesture', async () => { const app = createApp(filename); await completed(app); app.frame(100); app.el('revealButton').dispatch('pointerdown', { pointerId: 7 }); app.el('revealButton').dispatch('pointerup', { pointerId: 8 }); app.frame(1300); assert.equal(app.screen(), 'resultScreen'); });
@@ -234,5 +234,142 @@ for (const initialLanguage of ['en', 'ja']) test(`header language controls stay 
     assert.equal(app.document.documentElement.lang, language === 'ja' ? 'en' : 'ja');
   }
 });
+
+// Regression coverage for private pauses, screen focus, and literal recovery text.
+function setPageHidden(app, hiddenValue) {
+  app.document.hidden = hiddenValue;
+  app.document.visibilityState = hiddenValue ? 'hidden' : 'visible';
+  app.document.dispatch('visibilitychange');
+}
+for (const language of ['en', 'ja']) for (const event of ['blur', 'hidden']) {
+  test(`private ${event} pause requires explicit resume without recording a choice (${language})`, async () => {
+    const app = createApp(filename, { language }); await start(app);
+    app.el('beginVoteButton').click(); app.el('voteOptions').children[1].click();
+    const before = state(app), saved = app.storage.get(key);
+    if (event === 'blur') app.window.dispatch('blur'); else setPageHidden(app, true);
+    assert.equal(app.screen(), 'privacyScreen');
+    assert.equal(app.el('confirmChoice').textContent, '');
+    assert.equal(app.el('voteOptions').children.length, 0);
+    assert.equal(app.run('pendingChoiceIndex'), 1);
+    app.window.dispatch('blur'); setPageHidden(app, true);
+    app.el('privacyResumeButton').click(); app.el('confirmVoteButton').click();
+    app.el('chooseAgainButton').click(); app.document.querySelector('.abort-vote-button').click();
+    assert.deepEqual(state(app), before); assert.equal(app.storage.get(key), saved);
+    setPageHidden(app, false); app.window.dispatch('focus'); app.frame(30);
+    assert.equal(app.screen(), 'privacyScreen');
+    assert.equal(app.document.activeElement, app.el('privacyTitle'));
+    assert.equal(app.el('appConfirmDialog').open, false);
+    app.el('languageButton').click();
+    assert.equal(app.el('confirmChoice').textContent, '');
+    app.document.hasFocus = () => false; app.el('privacyResumeButton').click();
+    assert.equal(app.screen(), 'privacyScreen'); app.document.hasFocus = () => true;
+    app.el('privacyResumeButton').click(); app.frame(40);
+    assert.equal(app.screen(), 'confirmVoteScreen');
+    assert.equal(app.el('confirmChoice').textContent, 'Pasta');
+    assert.equal(app.document.activeElement, app.el('confirmVoteTitle'));
+    assert.deepEqual(state(app), before);
+    app.el('confirmVoteButton').click(); app.el('confirmVoteButton').click();
+    assert.equal(state(app).completed, 1); assert.equal(state(app).options[1].votes, 1);
+  });
+}
+for (const target of ['readyScreen', 'voteScreen', 'handoffScreen', 'revealScreen', 'resultScreen']) {
+  test(`privacy pause resumes ${target} with unchanged counts`, async () => {
+    const app = createApp(filename); await start(app);
+    if (target === 'voteScreen') app.el('beginVoteButton').click();
+    if (target === 'handoffScreen') vote(app);
+    if (target === 'revealScreen' || target === 'resultScreen') { vote(app); vote(app); }
+    if (target === 'resultScreen') { app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); }
+    assert.equal(app.screen(), target); const before = state(app);
+    app.window.dispatch('blur'); assert.equal(app.screen(), 'privacyScreen');
+    app.el('saveResultButton').click(); app.el('nextVoterButton').click(); app.el('beginVoteButton').click();
+    assert.equal(app.downloads.length, 0); assert.deepEqual(state(app), before);
+    app.el('privacyResumeButton').click(); assert.equal(app.screen(), target); assert.deepEqual(state(app), before);
+  });
+}
+for (const language of ['en', 'ja']) test(`paused result resumes in the selected language without changing filename (${language})`, async () => {
+  const app = createApp(filename, { language }); await completed(app);
+  app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle();
+  app.input(app.el('outputFilename'), 'my-vote.txt'); app.window.dispatch('blur');
+  app.el('languageButton').click(); app.el('privacyResumeButton').click();
+  assert.equal(app.screen(), 'resultScreen');
+  assert.match(app.el('resultList').textContent, language === 'en' ? /票/ : /vote/);
+  assert.equal(app.el('outputFilename').value, 'my-vote.txt');
+});
+test('privacy cancels ordinary dialogs and ignores already accepted async transitions', async () => {
+  const app = createApp(filename); await completed(app);
+  app.el('alternateRevealButton').click(); app.el('appConfirmOk').click();
+  app.window.dispatch('blur'); await app.settle();
+  assert.equal(app.screen(), 'privacyScreen'); assert.equal(app.el('resultList').children.length, 0);
+  app.el('privacyResumeButton').click(); assert.equal(app.screen(), 'revealScreen');
+  app.document.querySelector('.abort-vote-button').click(); assert.equal(app.el('appConfirmDialog').open, true);
+  app.window.dispatch('blur'); await app.settle();
+  assert.equal(app.el('appConfirmDialog').open, false); assert.equal(state(app).completed, 2);
+  app.el('privacyResumeButton').click(); app.el('helpButton').click();
+  app.window.dispatch('blur'); assert.equal(app.el('helpDialog').open, false); assert.equal(app.screen(), 'privacyScreen');
+});
+test('Back while paused discards only the unfinished answer and keeps the curtain', async () => {
+  const app = createApp(filename); await start(app); vote(app); app.el('nextVoterButton').click();
+  app.el('beginVoteButton').click(); app.el('voteOptions').children[1].click(); app.window.dispatch('blur');
+  app.window.dispatch('popstate'); assert.equal(app.screen(), 'privacyScreen'); assert.equal(app.run('pendingChoiceIndex'), null);
+  app.el('privacyResumeButton').click(); assert.equal(app.screen(), 'readyScreen'); assert.equal(state(app).completed, 1);
+});
+for (const target of ['confirmVoteScreen', 'handoffScreen', 'revealScreen', 'resultScreen']) {
+  test(`paused ${target} preserves safe reload phase and BFCache resume`, async () => {
+    const app = createApp(filename); await start(app);
+    if (target === 'confirmVoteScreen') { app.el('beginVoteButton').click(); app.el('voteOptions').children[1].click(); }
+    else vote(app);
+    if (target === 'revealScreen' || target === 'resultScreen') vote(app);
+    if (target === 'resultScreen') { app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); }
+    app.window.dispatch('blur'); app.window.dispatch('pagehide'); app.window.dispatch('pageshow', { persisted: true });
+    const expected = target === 'confirmVoteScreen' ? 'readyScreen' : target;
+    assert.equal(app.screen(), 'privacyScreen'); assert.equal(app.run('pendingChoiceIndex'), null);
+    const restored = createApp(filename, { storage: app.storage }); restored.el('sessionRecoveryContinue').click();
+    assert.equal(restored.screen(), expected); assert.equal(restored.el('confirmChoice').textContent, '');
+    app.el('privacyResumeButton').click(); assert.equal(app.screen(), expected);
+  });
+}
+test('old option buttons cannot select a choice after privacy resume', async () => {
+  const app = createApp(filename); await start(app); app.el('beginVoteButton').click();
+  const stale = app.el('voteOptions').children[0]; app.window.dispatch('blur'); app.el('privacyResumeButton').click();
+  stale.click(); assert.equal(app.screen(), 'voteScreen'); assert.equal(app.run('pendingChoiceIndex'), null);
+  app.el('voteOptions').children[1].click(); assert.equal(app.el('confirmChoice').textContent, 'Pasta');
+});
+test('new screens focus non-action headings without hijacking newer input or dialogs', async () => {
+  const app = createApp(filename); await start(app); app.frame(10);
+  assert.equal(app.document.activeElement, app.el('readyTitle'));
+  assert.equal(app.el('readyTitle').getAttribute('tabindex'), '-1');
+  app.el('beginVoteButton').click(); app.frame(20); assert.equal(app.document.activeElement, app.el('voteQuestion'));
+  app.el('voteOptions').children[0].click(); app.frame(30); assert.equal(app.document.activeElement, app.el('confirmVoteTitle'));
+  app.el('confirmVoteButton').click(); app.frame(40); assert.equal(app.document.activeElement, app.el('handoffTitle'));
+  app.el('nextVoterButton').click(); app.el('helpButton').click(); app.el('closeHelpButton').focus(); app.frame(50);
+  assert.equal(app.document.activeElement, app.el('closeHelpButton')); app.el('closeHelpButton').click();
+  app.el('beginVoteButton').click(); app.el('voteOptions').children[1].focus(); app.frame(60);
+  assert.equal(app.document.activeElement, app.el('voteOptions').children[1]);
+});
+test('stale screen focus cannot reach a curtain or newer session', async () => {
+  const app = createApp(filename); await start(app); const stale = [...app.frames.values()];
+  app.window.dispatch('blur'); assert.ok(app.el('privacyTitle'), 'a neutral privacy heading exists'); stale.forEach(fn => fn(50)); app.frame(60);
+  assert.equal(app.document.activeElement, app.el('privacyTitle'));
+  app.run('restoreVoteSession({phase:"ready",state:{question:"New",options:[{label:"A",votes:0},{label:"B",votes:0}],participants:2,completed:0}})');
+  app.el('beginVoteButton').focus(); stale.forEach(fn => fn(80)); app.frame(90);
+  assert.equal(app.document.activeElement, app.el('beginVoteButton')); assert.equal(app.screen(), 'readyScreen');
+});
+test('private answers are not queued in broad live regions', () => {
+  const app = createApp(filename);
+  assert.equal(app.document.querySelector('.app-shell').getAttribute('aria-live'), null);
+  assert.equal(app.el('confirmChoice').getAttribute('aria-live'), null);
+});
+for (const language of ['en', 'ja']) for (const phase of ['ready', 'result']) {
+  test(`recovery renders dollar and placeholder question text literally (${language}, ${phase})`, () => {
+    const question = "Dollar $& $$ $` $' literal {done} {total} {question} <img onerror=bad>";
+    const completedCount = phase === 'result' ? 2 : 1;
+    const saved = { schemaVersion: 1, phase, state: { question, options: [{label:'A',votes:completedCount},{label:'B',votes:0}], participants:2,completed:completedCount } };
+    const app = createApp(filename, { language, storage: [[key, JSON.stringify(saved)]] });
+    const translation = app.run(`translations[language].${phase === 'result' ? 'recoveryResultMessage' : 'recoveryMessage'}`);
+    const expected = question + translation.slice('{question}'.length).replace('{done}', String(completedCount)).replace('{total}', '2');
+    assert.equal(app.el('sessionRecoveryMessage').textContent, expected);
+    assert.equal(app.el('sessionRecoveryMessage').children.length, 0);
+  });
+}
 
 (async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();

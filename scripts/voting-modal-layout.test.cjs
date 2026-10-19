@@ -6,6 +6,15 @@ const { createApp, loadHtml } = require('./voting-test-harness.cjs');
 const filename = path.resolve(__dirname, '..', process.env.PASS_THE_PHONE_VOTE_SOURCE || 'src/index.template.html');
 const html = loadHtml(filename);
 
+test('build information and footer are hidden only at the existing phone breakpoint', () => {
+  const mobileCss = html.match(/@media\(max-width:680px\)\{([\s\S]*?)\n\s*@media/)?.[1] || '';
+  assert.match(mobileCss, /\.build-section,footer\{display:none\}/);
+  const desktopCss = html.split('@media(max-width:680px)')[0];
+  assert.doesNotMatch(desktopCss, /\.build-section,footer\{display:none\}/);
+  assert.match(html, /<section class="build-section">/);
+  assert.match(html, /<footer>/);
+});
+
 // Source contracts complement native wheel, geometry, and keyboard checks.
 test('native modal root and body locks are scoped to an open modal', () => {
   assert.match(html, /html:has\(dialog:modal\),\s*body:has\(dialog:modal\)\s*\{\s*overflow:\s*hidden;?\s*\}/);
