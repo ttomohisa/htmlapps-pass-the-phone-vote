@@ -115,6 +115,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 ## 7. UX and accessibility
 
 - Smartphone-first responsive layout from 320px upward; desktop remains supported.
+- The build-information section and page footer are hidden at the existing smartphone breakpoint (680px and below), and remain available at wider widths.
 - Mobile primary actions use at least 48px height, while secondary touch targets are at least 44px even when visually subdued.
 - Header/help/confirmation controls respect mobile safe areas and remain reachable on short-height screens.
 - Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Hide the build-information section and footer at smartphone widths (680px and below), preserving their desktop display.
+
 - Clarify Japanese and English help by removing internal layout, implementation, and audit commentary while preserving usage guidance and cautions.
 
 ## Unreleased

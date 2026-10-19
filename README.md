@@ -28,7 +28,7 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Reveal only when intended** — Hold the reveal button to open results, with a confirmation-based alternative for users who cannot perform a hold gesture.
 - **Keep aggregate results** — Save a UTF-8 `.txt` file with an editable filename, copy results, use the OS share sheet when supported, or run the same vote again with counts reset.
 - **Keep dialogs usable on short screens** — Help, confirmation, and recovery pause background page scrolling until dismissed. Scroll inside Help or the confirmation/recovery body to reach its content and actions. Recovery stays open on Escape or backdrop clicks; choose Continue or Discard.
-- **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use.
+- **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use. Build information and the footer stay out of the way at phone widths (680px and below).
 - **Fully local single HTML** — No runtime CDN, analytics, telemetry, remote fonts, or application API calls are required.
 
 ## Quick start
