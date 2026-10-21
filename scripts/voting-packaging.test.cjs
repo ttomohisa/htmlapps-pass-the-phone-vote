@@ -19,5 +19,5 @@ test('validation covers Node.js 22 and 24 while preview pins Node.js 24', () => 
   assert.match(validation, /node: \[22, 24\]/);
   assert.match(validation, /node-version: \$\{\{ matrix\.node \}\}/);
   assert.match(validation, /name: standalone-html-.*matrix\.node/);
-  assert.match(preview, /uses: actions\/setup-node@v6\s+with:\s+node-version: 24\b/);
+  assert.match(preview, /uses: actions\/setup-node@(?:v6|249970729cb0ef3589644e2896645e5dc5ba9c38)\s+with:\s+node-version: 24\b/);
 });
