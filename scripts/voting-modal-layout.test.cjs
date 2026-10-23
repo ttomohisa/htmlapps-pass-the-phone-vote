@@ -6,6 +6,30 @@ const { createApp, loadHtml } = require('./voting-test-harness.cjs');
 const filename = path.resolve(__dirname, '..', process.env.PASS_THE_PHONE_VOTE_SOURCE || 'src/index.template.html');
 const html = loadHtml(filename);
 
+test('build information is the final Help body item, not main-page content', () => {
+  const app = createApp(filename);
+  const build = app.document.querySelector('.build-section');
+  const body = app.el('helpDialog').querySelector('.dialog-body');
+  assert.ok(build.parentElement === body, 'Build information belongs inside the scrolling Help body.');
+  assert.ok(body.children.at(-1) === build, 'Build information follows all Help notes.');
+  assert.equal(app.document.querySelector('main').querySelector('.build-section'), null);
+  assert.equal(app.document.querySelectorAll('.build-section').length, 1);
+  assert.ok(build.querySelector('details').querySelector('summary'));
+  for (const id of ['buildVersion', 'builtAt', 'dependencyCount']) {
+    assert.equal(app.document.querySelectorAll('#' + id).length, 1, id + ' stays unique.');
+    assert.ok(app.el(id).closest('.build-section') === build);
+  }
+});
+
+test('local-processing badge and footer use the same English phrase', () => {
+  const app = createApp(filename, { language: 'en' });
+  assert.equal(app.run("t('localBadge')"), 'Fully local processing');
+  assert.equal(app.run("t('footer')"), 'Fully local processing · Single HTML');
+  app.el('languageButton').click();
+  assert.equal(app.run("t('localBadge')"), '完全ローカル処理');
+  assert.equal(app.run("t('footer')"), '完全ローカル処理・単一HTML');
+});
+
 test('build information and footer are hidden only at the existing phone breakpoint', () => {
   const mobileCss = html.match(/@media\(max-width:680px\)\{([\s\S]*?)\n\s*@media/)?.[1] || '';
   assert.match(mobileCss, /\.build-section,footer\{display:none\}/);
