@@ -125,7 +125,9 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 ## 7. UX and accessibility
 
 - Smartphone-first responsive layout from 320px upward; desktop remains supported.
-- The build-information section and page footer are hidden at the existing smartphone breakpoint (680px and below), and remain available at wider widths.
+- Build information is the final item inside the Help dialog’s scrollable body, not part of the main page. Its existing native disclosure, populated values, and bilingual labels remain intact. Keyboard activation of its summary must keep Help open; only clicks targeting the dialog backdrop can dismiss it.
+- The build-information section and page footer remain hidden at the existing smartphone breakpoint (680px and below). At wider widths, build information is available in Help and the footer remains visible.
+- The English translation of 完全ローカル処理 is “Fully local processing” in both the badge and informational footer.
 - Mobile primary actions use at least 48px height, while secondary touch targets are at least 44px even when visually subdued.
 - Header/help/confirmation controls respect mobile safe areas and remain reachable on short-height screens.
 - Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling.
@@ -203,7 +205,7 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - Mobile confirmation/help dialogs account for bottom safe-area inset and remain scrollable.
 - At 393 × 252 CSS pixels, confirmation and recovery bodies scroll far enough to reach both actions, including long questions and choice lists; their headers remain visible.
 - Outside-wheel and keyboard scrolling do not move the background page while Help, confirmation, or recovery is modal. Help text still scrolls to the final note; closing the modal restores page scrolling.
-- Dependency-free modal regressions run against the source template, readable build, decoded self-extract payload, and root download; native viewport, wheel, and keyboard checks remain required.
+- Dependency-free modal regressions run against the source template, readable build, decoded self-extract payload, and root download. The unprivileged PR preview build also runs pinned test-only Chromium checks against all three generated/download variants in Japanese and English, including the 680px boundary, narrow/short Help scrolling, native details keyboard access, dismissal, console errors, and unexpected network requests.
 - Secondary reveal/stop controls retain low visual emphasis while providing at least a 44px touch target.
 - Participant decrement/increment/count controls switch accessible names with the selected UI language.
 
