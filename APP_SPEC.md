@@ -125,7 +125,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 ## 7. UX and accessibility
 
 - Smartphone-first responsive layout from 320px upward; desktop remains supported.
-- Build information is the final item inside the Help dialog’s scrollable body, not part of the main page. Its existing native disclosure, populated values, and bilingual labels remain intact.
+- Build information is the final item inside the Help dialog’s scrollable body, not part of the main page. Its existing native disclosure, populated values, and bilingual labels remain intact. Keyboard activation of its summary must keep Help open; only clicks targeting the dialog backdrop can dismiss it.
 - The build-information section and page footer remain hidden at the existing smartphone breakpoint (680px and below). At wider widths, build information is available in Help and the footer remains visible.
 - The English translation of 完全ローカル処理 is “Fully local processing” in both the badge and informational footer.
 - Mobile primary actions use at least 48px height, while secondary touch targets are at least 44px even when visually subdued.

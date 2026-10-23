@@ -30,6 +30,17 @@ test('local-processing badge and footer use the same English phrase', () => {
   assert.equal(app.run("t('footer')"), '完全ローカル処理・単一HTML');
 });
 
+test('keyboard clicks inside Help do not masquerade as backdrop clicks', () => {
+  const app = createApp(filename);
+  const dialog = app.el('helpDialog');
+  dialog.getBoundingClientRect = () => ({ left: 100, top: 100, right: 740, bottom: 700 });
+  app.el('helpButton').click();
+  dialog.dispatch('click', { target: dialog.querySelector('.build-section').querySelector('summary'), clientX: 0, clientY: 0 });
+  assert.equal(dialog.open, true, 'Keyboard activation of build details keeps Help open.');
+  dialog.dispatch('click', { target: dialog, clientX: -1, clientY: -1 });
+  assert.equal(dialog.open, false, 'A genuine backdrop click still closes Help.');
+});
+
 test('build information and footer are hidden only at the existing phone breakpoint', () => {
   const mobileCss = html.match(/@media\(max-width:680px\)\{([\s\S]*?)\n\s*@media/)?.[1] || '';
   assert.match(mobileCss, /\.build-section,footer\{display:none\}/);

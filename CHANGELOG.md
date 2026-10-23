@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Move build information to the end of Help while preserving existing smartphone hiding, and standardize the English local-processing wording to “Fully local processing”.
+- Move build information to the end of Help while preserving existing smartphone hiding, and standardize the English local-processing wording to “Fully local processing”. Keep keyboard activation of its native disclosure from being mistaken for a backdrop click.
 
 - 1.0.3: Add a neutral privacy screen when switching away from an active vote/result, with explicit same-page resume and memory-only unfinished selections. Keep Back/reload/BFCache recovery neutral, cancel interrupted dialogs/reveal holds, and reject stale choice/async events.
 - Move focus to neutral screen headings after transitions, respecting newer focus and dialogs; remove broad/private live announcements.
