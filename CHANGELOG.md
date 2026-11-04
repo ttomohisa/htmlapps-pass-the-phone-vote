@@ -2,11 +2,19 @@
 
 ## Unreleased
 
+## 1.0.4
+
+- Refine the result screen: remove the redundant aggregate-results subtitle, keep the aggregate-only export note as two complete lines on phones, group Copy/Share/.txt download, and separate the repeat/new-vote choices with explanatory sublabels.
+
+- Simplify the smartphone setup and voting screens, retain the completed-vote checkmark, hide the redundant 'Secret vote' label on the ballot, and shorten the confirmation note. Keep 1.2-second hold-to-reveal (with confirmation alternative) on mobile and desktop. Preserve one-tap private handoff, results-first actions, collapsed text export, and existing privacy protections.
+
 - Hide the “Fully local processing” badge at smartphone widths (680px and below), preserving it on desktop.
 
 - Move build information to the end of Help while preserving existing smartphone hiding, and standardize the English local-processing wording to “Fully local processing”. Keep keyboard activation of its native disclosure from being mistaken for a backdrop click.
 
-- 1.0.3: Add a neutral privacy screen when switching away from an active vote/result, with explicit same-page resume and memory-only unfinished selections. Keep Back/reload/BFCache recovery neutral, cancel interrupted dialogs/reveal holds, and reject stale choice/async events.
+## 1.0.3
+
+- Add a neutral privacy screen when switching away from an active vote/result, with explicit same-page resume and memory-only unfinished selections. Keep Back/reload/BFCache recovery neutral, cancel interrupted dialogs/reveal holds, and reject stale choice/async events.
 - Move focus to neutral screen headings after transitions, respecting newer focus and dialogs; remove broad/private live announcements.
 - Preserve dollar signs and placeholder-shaped question text literally in recovery messages using one-pass interpolation.
 
@@ -14,11 +22,13 @@
 
 - Clarify Japanese and English help by removing internal layout, implementation, and audit commentary while preserving usage guidance and cautions.
 
-## Unreleased
+## 1.0.2
 
-- 1.0.2: Paused root/body background scrolling while Help, confirmation, or recovery is modal. Bounded confirmation/recovery shells keep their headers visible and let their bodies scroll through both actions on short screens, preserving existing forced-recovery decisions and vote state. Added bilingual Help/docs and source/readable/self-extract/root modal regressions. Prevented Escape from silently dismissing reload recovery before Continue/Discard, including non-cancelable native close requests, with a recovery-only Escape fallback and bilingual decision regressions.
+- Paused root/body background scrolling while Help, confirmation, or recovery is modal. Bounded confirmation/recovery shells keep their headers visible and let their bodies scroll through both actions on short screens, preserving existing forced-recovery decisions and vote state. Added bilingual Help/docs and source/readable/self-extract/root modal regressions. Prevented Escape from silently dismissing reload recovery before Continue/Discard, including non-cancelable native close requests, with a recovery-only Escape fallback and bilingual decision regressions.
 
-- 1.0.1: Standardized the header language control to EN / JA with localized target-language labels and tooltips; kept Help / Close labels and tooltips localized. Added repeated-switch regression coverage.
+## 1.0.1
+
+- Standardized the header language control to EN / JA with localized target-language labels and tooltips; kept Help / Close labels and tooltips localized. Added repeated-switch regression coverage.
 
 - Added optional multiline choice-list entry with atomic validation, localized guidance/errors, guarded Undo, and no draft persistence or automatic clipboard access.
 - Fixed keyboard focus falling out of the live choice list after removing a row; queued focus respects newer edits, screens, and dialogs.

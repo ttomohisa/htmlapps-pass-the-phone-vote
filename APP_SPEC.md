@@ -4,7 +4,7 @@
 
 - **Name:** Pass-the-Phone Vote
 - **Japanese name:** スマホ回し投票
-- **Version:** 1.0.3
+- **Version:** 1.0.4
 - **One-sentence purpose:** One phone is passed around for a private in-person vote, and only the final aggregate result is revealed after everyone has voted.
 - **Primary users:** Families, friends, small teams, classrooms, workshops, and other co-located small groups.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`
@@ -15,7 +15,7 @@ Small groups often want a quick secret vote without installing an app, creating 
 
 Confirmed votes increment only the aggregate count for the selected option. The app does not create or retain a voter-to-choice mapping.
 
-## 3. v1.0.0 user flow
+## 3. User flow (v1.0.4)
 
 
 ### Operation safety
@@ -52,16 +52,16 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 
 
 1. Enter a question, 2–10 choices, and participant count.
-2. Start voting and show a neutral “Person N” ready screen before every participant.
+2. Start voting and show a neutral “Person N” ready screen for the first participant. On mobile, subsequent participants enter from a neutral handoff screen; on desktop, each still sees a ready screen.
 3. The current participant presses the vote button and chooses one option.
 4. Show that participant an explicit confirmation screen before the vote is counted.
 5. On confirmation, increment only the selected option count, clear the pending choice and private answer DOM, then show a neutral handoff screen.
-6. Pass the phone to the next participant and repeat.
+6. Pass the phone to the next participant and repeat. At widths up to 680px, their handoff button opens the next blank ballot directly without an additional ready-button tap.
 7. Browser Back must never restore a previous participant's answer or confirmation screen.
 8. After the configured number of votes, show a dedicated reveal screen.
-9. Reveal requires a 1.2-second hold gesture with visible progress, or an accessible confirmation-based alternative.
+9. On both smartphones and desktops, reveal requires a continuous 1.2-second hold with progress. A confirmation-based alternative remains available for people unable to hold.
 10. After reveal, show only aggregate results.
-11. The revealed result can be copied, saved as a UTF-8 `.txt` file with an editable filename, and shared through Web Share API when available.
+11. The revealed result can be copied, saved as a UTF-8 `.txt` file with an editable filename, and shared through Web Share API when available. The result interface groups Copy/Share and text-file save under a "Keep the results" heading, ahead of a separate "Vote again" group. On mobile, text-file save starts collapsed.
 12. “Vote again with same setup” requires confirmation, resets aggregate counts only, and restarts from Person 1 with the same setup.
 13. “Create a new vote” remains a separate confirmed action that returns to editable setup.
 
@@ -71,7 +71,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - 2–10 choices are supported; each choice is required and limited to 80 characters.
 - Duplicate choices are rejected case-insensitively after trimming.
 - Participant count supports 2–100.
-- Every participant starts from a neutral ready screen.
+- The first participant starts from a neutral ready screen. Subsequent participants start at a neutral handoff screen; on mobile, the next person taps once to see a fresh ballot, and desktop retains the separate ready step.
 - Selecting an option does not count the vote until explicit confirmation.
 - “Choose again” returns only the current participant to the choice screen.
 - After confirmation, no selected answer remains in the confirmation element or vote-options container.
@@ -224,3 +224,11 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - **v0.8.0:** UI/UX polish, help/privacy refinement, and mobile edge cases.
 - **v0.9.0:** Release candidate regression across languages, browsers, sizes, and boundary cases.
 - **v1.0.0:** Formal release after final README, screenshot, version, standalone, privacy, and regression checks.
+
+## v1.0.4 smartphone presentation
+
+- At 680px and below, hide the landing hero, local-processing badge, repeated setup instructions and secondary privacy callouts from the main workflow. The privacy and safety explanation remains in Help.
+- Remove the nested app-card treatment. Make the question and large answer targets the primary ballot content. Keep explicit vote confirmation and neutral handoff.
+- Keep the 1.2-second hold-to-reveal button visible and primary on both mobile and desktop. Preserve the confirmation-based alternative. Restore the completed-vote checkmark icon on mobile and hide the redundant ballot-header 'Secret vote' label on mobile.
+- Remove the redundant aggregate-only subtitle above result counts. Group Copy/Share and collapsed file export under one "Keep the results" heading, before clearly separated repeat/new-vote controls with short explanations. Display the aggregate-only privacy note as two complete sentences, each on its own line on mobile.
+- Do not change vote integrity, data retention, privacy curtain or recovery semantics.

@@ -50,6 +50,35 @@ test('build information and footer are hidden only at the existing phone breakpo
   assert.match(html, /<footer>/);
 });
 
+test('phone-first layout hides redundant landing chrome and prioritizes results', () => {
+  const mobileCss = html.match(/@media\(max-width:680px\)\{([\s\S]*?)\n\s*@media/)?.[1] || '';
+  assert.match(mobileCss, /\.page-intro\{display:none\}/);
+  assert.match(mobileCss, /\.app-shell\{min-height:[^}]*border:0;border-radius:0;box-shadow:none/);
+  assert.doesNotMatch(mobileCss, /#revealButton,#revealHint\{display:none\}/);
+  assert.match(mobileCss, /#revealScreen \.reveal-actions\{width:100%;max-width:400px;margin:24px auto 0;gap:12px\}/);
+  assert.match(mobileCss, /#handoffScreen \.handoff-icon\{display:grid\}/);
+  assert.match(mobileCss, /#voteScreen \[data-i18n="secretVote"\]\{display:none\}/);
+  assert.match(html, /id="revealButton"[^>]*aria-describedby="revealHint"/);
+  assert.match(mobileCss, /#resultScreen \.result-actions\{order:1/);
+  assert.match(mobileCss, /#resultScreen \.result-action-note span\{display:block\}/);
+  assert.match(mobileCss, /#resultScreen \.result-next-group\{padding-top:23px\}/);
+  assert.doesNotMatch(html, /data-i18n="aggregateOnly"/);
+  const actions = html.slice(html.indexOf('<div class="result-actions">'), html.indexOf('<!-- APP:END -->', html.indexOf('<div class="result-actions">')));
+  for (const label of ['resultSaveHeading', 'resultNextHeading', 'resultActionNoteFirst', 'resultActionNoteSecond', 'repeatVoteDetail', 'newVoteDetail']) {
+    assert.match(actions, new RegExp('data-i18n="'+label+'"'));
+  }
+  const indexes = ['copyResultButton', 'shareResultButton', 'resultExportDetails', 'repeatVoteButton', 'newVoteButton'].map(id => actions.indexOf('id="'+id+'"'));
+  assert.ok(indexes.every(index => index >= 0), 'All result actions stay accessible');
+  assert.deepEqual(indexes, [...indexes].sort((a,b) => a-b), 'Keep results before starting another poll');
+  assert.match(actions, /保存・コピー・共有するのは集計結果のみ。/);
+  assert.match(actions, /個別の回答は含まれません。/);
+  assert.match(html, /id="resultExportDetails" open/);
+  assert.match(html, /data-i18n="setupMobileTitle"/);
+  assert.match(html, /data-i18n="nextPersonMobile"/);
+  assert.match(html, /data-i18n="alternateReveal"/);
+  assert.match(html, /data-i18n="confirmVoteNote">投票すると、この回答は画面から消えます。<\/p>/);
+});
+
 // Source contracts complement native wheel, geometry, and keyboard checks.
 test('native modal root and body locks are scoped to an open modal', () => {
   assert.match(html, /html:has\(dialog:modal\),\s*body:has\(dialog:modal\)\s*\{\s*overflow:\s*hidden;?\s*\}/);

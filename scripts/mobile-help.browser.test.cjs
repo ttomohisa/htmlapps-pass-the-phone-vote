@@ -73,6 +73,48 @@ async function main() {
             await page.locator('#helpButton').click();
             await page.locator('#closeHelpButton').click();
             assert.equal(await page.locator('#helpDialog').isVisible(), false, label + ': reopen and Close');
+            // Exercise the actual mobile result layout in Chromium, not just a CSS text contract.
+            if (file === 'dist/index.html' && width <= 360 && height >= 568) {
+              await page.locator('#questionInput').fill(language === 'ja' ? 'テスト投票' : 'Test vote');
+              const inputs = page.locator('.option-input');
+              for (let i = 0, count = await inputs.count(); i < count; i += 1) {
+                await inputs.nth(i).fill(language === 'ja' ? '候補' + (i + 1) : 'Choice ' + (i + 1));
+              }
+              await page.locator('#participantCount').fill('2');
+              await page.locator('#startVoteButton').click();
+              await page.locator('#appConfirmOk').click();
+              await page.locator('#beginVoteButton').click();
+              await page.locator('#voteOptions .vote-option').first().click();
+              await page.locator('#confirmVoteButton').click();
+              await page.locator('#nextVoterButton').click();
+              await page.locator('#voteOptions .vote-option').nth(1).click();
+              await page.locator('#confirmVoteButton').click();
+              assert.ok(await page.locator('#revealScreen').evaluate(el => el.classList.contains('active')), label + ': reveal screen');
+              const reveal = page.locator('#revealButton');
+              await reveal.scrollIntoViewIfNeeded();
+              const rect = await reveal.boundingBox();
+              assert.ok(rect, label + ': hold button visible');
+              await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+              await page.mouse.down();
+              await page.waitForTimeout(1350);
+              await page.mouse.up();
+              assert.ok(await page.locator('#resultScreen').evaluate(el => el.classList.contains('active')), label + ': hold reveals results');
+              assert.equal(await page.locator('#resultSaveHeading').innerText(), language === 'ja' ? '結果を残す' : 'Keep the results', label);
+              assert.equal(await page.locator('#resultNextHeading').innerText(), language === 'ja' ? '続けて投票する' : 'Vote again', label);
+              assert.equal(await page.locator('#resultExportDetails').evaluate(el => el.open), false, label + ': file save is collapsed');
+              assert.ok(await page.locator('.result-action-note').evaluate(el => {
+                const parts = el.querySelectorAll('span');
+                return parts.length === 2 && parts[1].getBoundingClientRect().top > parts[0].getBoundingClientRect().top;
+              }), label + ': explanatory sentences have clean breaks');
+              assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': results have no horizontal scroll');
+              for (const id of ['copyResultButton', 'repeatVoteButton', 'newVoteButton', 'resultExportDetails']) {
+                assert.ok(await page.locator('#' + id).evaluate(el => {
+                  const box = el.getBoundingClientRect();
+                  return box.left >= -1 && box.right <= innerWidth + 1;
+                }), label + ': ' + id + ' fits phone width');
+              }
+              await page.screenshot({ path: path.join(results, `result-${language}-${width}.png`), fullPage: true });
+            }
             assert.deepEqual(errors, [], label + ': console errors');
             assert.deepEqual(requests, [], label + ': external runtime requests');
             console.log('PASS ' + label);

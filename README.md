@@ -6,6 +6,8 @@
 
 [日本語版 README](README.ja.md)
 
+[v1.0.4 release notes (日本語 / English)](docs/releases/v1.0.4.md)
+
 A single-HTML voting tool for passing one phone around a group, letting each person vote without seeing anyone else's answer, and revealing only the aggregate result after everyone has voted.
 
 
@@ -15,7 +17,7 @@ A single-HTML voting tool for passing one phone around a group, letting each per
 
 GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temporary session recovery, tallying, and result display are processed locally on your device. Vote data is not sent to a server by the app.
 
-[![Pass-the-Phone Vote v1.0.3 English setup screen](assets/screenshot-en.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
+[![Pass-the-Phone Vote v1.0.4 English setup screen](assets/screenshot-en.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
 
 ## Features
 
@@ -27,10 +29,10 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Pause privately when switching away** — Voting and result screens are hidden when the page loses focus or is backgrounded. Press Resume screen to continue; an unfinished choice stays only in this open page’s memory. Back or reload requires choosing again. Device app-switcher previews and screenshots cannot be guaranteed private.
 - **Follow the current screen with the keyboard** — Each new voting screen focuses its heading, so you can read the context before moving to its controls.
 - **Protect against accidental input** — Vote confirmation, handoff, reveal, restart, and stop actions include guards or confirmation where needed.
-- **Reveal only when intended** — Hold the reveal button to open results, with a confirmation-based alternative for users who cannot perform a hold gesture.
+- **Reveal only when intended** — Hold the reveal button on phones or desktops. A confirmation-based alternative remains available if holding is difficult.
 - **Keep aggregate results** — Save a UTF-8 `.txt` file with an editable filename, copy results, use the OS share sheet when supported, or run the same vote again with counts reset.
 - **Keep dialogs usable on short screens** — Help, confirmation, and recovery pause background page scrolling until dismissed. Scroll inside Help or the confirmation/recovery body to reach its content and actions. Recovery stays open on Escape or backdrop clicks; choose Continue or Discard.
-- **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use. Build information and the footer stay out of the way at phone widths (680px and below).
+- **Mobile-first operation** — At 680px and below, the setup and ballot take priority over decorative cards and repeated notes. The next person can open their ballot from the handoff screen in one tap. Text-file export settings stay collapsed until needed. Japanese / English supported.
 - **Fully local single HTML** — No runtime CDN, analytics, telemetry, remote fonts, or application API calls are required.
 
 ## Quick start
@@ -41,7 +43,7 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/).
 
 ### Use the download file
 
-1. Download the generated `dist/index.html` from this repository or a release archive.
+1. Download `index.html` from the GitHub Release assets, or download the latest successful `main` branch Actions build artifact and extract `dist/index.html`. Generated `dist/` files are not committed to Git.
 2. Open it in a current Chromium-based browser, Firefox, or Safari.
 3. The same file can be opened later without an internet connection.
 
@@ -60,9 +62,9 @@ No runtime third-party library is required by the app itself.
 2. Enter a question, 2–10 choices, and a participant count from 2–100.
 3. Press **Start voting** and review the setup before beginning.
 4. Hand the phone to the first participant. They press **Vote now**, choose one option, and confirm it.
-5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person.
+5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person. On a phone they tap **Next person votes** to see a blank ballot; on desktop they then press **Vote now**.
 6. Repeat until everyone has voted.
-7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
+7. After everyone votes, hold **Hold to reveal** for 1.2 seconds on a phone or desktop. Alternatively, confirm through the fallback action.
 8. Edit the result filename and save a `.txt` file, copy or share the aggregate result, vote again with the same setup, or create a new vote.
 
 ### Vote setup
@@ -79,11 +81,15 @@ No runtime third-party library is required by the app itself.
 
 ### Result actions
 
+![Pass-the-Phone Vote v1.0.4 English result screen on a smartphone](assets/screenshot-result-en.png)
+
+On phones, **Keep the results** groups Copy, Share and the collapsed text-file download. **Vote again** separately offers the same setup or a new vote with editable settings. Only aggregate results, never individual answers, are saved or shared.
+
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
 
 **Save result** downloads the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
 
-A reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
+On phones and desktops, a reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 
 On supported devices, **Share result** passes the same aggregate text to the operating system's share sheet. The app does not automatically send the result to any remote service.
 

@@ -81,7 +81,7 @@ function createApp(filename, options = {}) {
     stack.at(-1).append(element); if (!voids.has(tag) && !attrs.endsWith('/')) stack.push(element);
   }
   document.body = document.querySelector('body'); document.head = document.querySelector('head');
-  const window = new Target(); window.matchMedia = () => ({ matches: false }); window.scrollTo = () => {}; window.scrollY = 0;
+  const window = new Target(); window.matchMedia = query => ({ matches: Boolean(options.mobile && query === '(max-width:680px)') }); window.scrollTo = () => {}; window.scrollY = 0;
   const controls = { failWrite: false, failRemove: false, writes: 0, removes: 0 };
   const history = { state: {}, replaceState(state) { this.state = state; }, pushState(state) { this.state = state; }, back() { this.state = {}; } };
   const setTimeout = fn => { timers.set(++timerId, fn); return timerId; }, clearTimeout = id => timers.delete(id);

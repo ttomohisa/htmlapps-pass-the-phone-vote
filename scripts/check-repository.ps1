@@ -56,6 +56,8 @@ foreach ($relative in $required) {
 
 # Dependency-free behavior and release packaging regressions are required.
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "Node.js 22 or newer is required for voting regression checks." }
+& node (Join-Path $Root "scripts\check-release-assets.cjs")
+if ($LASTEXITCODE -ne 0) { throw "Release screenshot and metadata verification failed." }
 & node (Join-Path $Root "scripts\voting-behavior.test.cjs")
 if ($LASTEXITCODE -ne 0) { throw "Voting source behavior regression failed." }
 & node --test (Join-Path $Root "scripts\voting-packaging.test.cjs")
