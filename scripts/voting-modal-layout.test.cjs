@@ -63,7 +63,7 @@ test('phone-first layout hides redundant landing chrome and prioritizes results'
   assert.match(mobileCss, /#resultScreen \.result-action-note span\{display:block\}/);
   assert.match(mobileCss, /#resultScreen \.result-next-group\{padding-top:23px\}/);
   assert.doesNotMatch(html, /data-i18n="aggregateOnly"/);
-  const actions = html.slice(html.indexOf('<div class="result-actions">'), html.indexOf('</section>\n    </section>', html.indexOf('<div class="result-actions">')));
+  const actions = html.slice(html.indexOf('<div class="result-actions">'), html.indexOf('<!-- APP:END -->', html.indexOf('<div class="result-actions">')));
   for (const label of ['resultSaveHeading', 'resultNextHeading', 'resultActionNoteFirst', 'resultActionNoteSecond', 'repeatVoteDetail', 'newVoteDetail']) {
     assert.match(actions, new RegExp('data-i18n="'+label+'"'));
   }
