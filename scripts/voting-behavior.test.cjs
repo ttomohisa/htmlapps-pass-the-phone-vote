@@ -54,6 +54,19 @@ test('mobile handoff opens the next private ballot with one deliberate action', 
   assert.deepEqual(state(app).options.map(x => x.votes), [1, 1]);
 });
 
+test('mobile hold-to-reveal stays primary and requires 1.2 seconds', async () => {
+  const app = createApp(filename, { mobile: true, language: 'ja' });
+  assert.equal(app.el('confirmVoteNote'), null, 'confirmation copy is a translatable paragraph, not an input');
+  assert.equal(app.run("t('confirmVoteNote')"), '投票すると、この回答は画面から消えます。');
+  await completed(app);
+  hold(app);
+  app.frame(1199);
+  hidden(app);
+  app.frame(1200);
+  assert.equal(app.screen(), 'resultScreen');
+  assert.deepEqual(state(app).options.map(x => x.votes), [1, 1]);
+});
+
 test('mobile handoff recovery remains neutral and never stores an individual answer', async () => {
   const app = createApp(filename, { mobile: true });
   await start(app, ['Rice', 'Pasta'], 2);
