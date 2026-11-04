@@ -81,6 +81,8 @@ No runtime third-party library is required by the app itself.
 
 ### Result actions
 
+![Pass-the-Phone Vote v1.0.4 English result screen on a smartphone](assets/screenshot-result-en.png)
+
 On phones, **Keep the results** groups Copy, Share and the collapsed text-file download. **Vote again** separately offers the same setup or a new vote with editable settings. Only aggregate results, never individual answers, are saved or shared.
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
