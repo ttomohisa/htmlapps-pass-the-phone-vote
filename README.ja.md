@@ -6,6 +6,8 @@
 
 [English README](README.md)
 
+[v1.0.4 リリースノート（日英）](docs/releases/v1.0.4.md)
+
 1台のスマホを順番に渡し、他の人の回答を見ずに1人ずつ投票し、全員の投票が終わった後に集計結果だけを開票する単一HTMLツールです。
 
 ## 🚀 デモ
@@ -14,7 +16,7 @@
 
 GitHub Pagesから最初のHTMLを読み込んだ後、投票設定・投票・一時的なセッション復旧・集計・結果表示は端末内で処理されます。投票データをアプリからサーバーへ送信する処理はありません。
 
-[![スマホ回し投票 v1.0.3 日本語の投票設定画面](assets/screenshot.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
+[![スマホ回し投票 v1.0.4 日本語の投票設定画面](assets/screenshot.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
 
 ## 主な機能
 
