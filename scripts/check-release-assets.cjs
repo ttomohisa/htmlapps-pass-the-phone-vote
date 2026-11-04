@@ -9,8 +9,10 @@ const version = config.version;
 assert.match(version, /^\d+\.\d+\.\d+$/, 'Expected a semantic version');
 
 for (const [file, readme, language] of [
-  ['screenshot.png', 'README.ja.md', '日本語'],
-  ['screenshot-en.png', 'README.md', 'English'],
+  ['screenshot.png', 'README.ja.md', '日本語（設定）'],
+  ['screenshot-result.png', 'README.ja.md', '日本語（結果）'],
+  ['screenshot-en.png', 'README.md', 'English setup'],
+  ['screenshot-result-en.png', 'README.md', 'English results'],
 ]) {
   const png = fs.readFileSync(path.join(root, 'assets', file));
   assert.ok(png.length > 8000, file + ': image unexpectedly small');
