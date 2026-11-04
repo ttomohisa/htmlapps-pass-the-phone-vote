@@ -50,6 +50,20 @@ test('build information and footer are hidden only at the existing phone breakpo
   assert.match(html, /<footer>/);
 });
 
+test('phone-first layout hides redundant landing chrome and prioritizes results', () => {
+  const mobileCss = html.match(/@media\\(max-width:680px\\)\\{([\\s\\S]*?)\\n\\s*@media/)?.[1] || '';
+  assert.match(mobileCss, /\\.page-intro\\{display:none\\}/);
+  assert.match(mobileCss, /\\.app-shell\\{min-height:[^}]*border:0;border-radius:0;box-shadow:none/);
+  assert.match(mobileCss, /#revealButton,#revealHint\\{display:none\\}/);
+  assert.match(mobileCss, /#alternateRevealButton\\{display:block;width:100%/);
+  assert.match(mobileCss, /#resultScreen \\.result-actions\\{order:1/);
+  assert.match(mobileCss, /#resultScreen \\.result-export\\{order:3/);
+  assert.match(html, /id="resultExportDetails" open/);
+  assert.match(html, /data-i18n="setupMobileTitle"/);
+  assert.match(html, /data-i18n="nextPersonMobile"/);
+  assert.match(html, /data-i18n="showResult"/);
+});
+
 // Source contracts complement native wheel, geometry, and keyboard checks.
 test('native modal root and body locks are scoped to an open modal', () => {
   assert.match(html, /html:has\(dialog:modal\),\s*body:has\(dialog:modal\)\s*\{\s*overflow:\s*hidden;?\s*\}/);
