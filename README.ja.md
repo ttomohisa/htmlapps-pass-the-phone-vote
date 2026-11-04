@@ -42,7 +42,7 @@ GitHub Pagesから最初のHTMLを読み込んだ後、投票設定・投票・�
 
 ### ダウンロードして使う
 
-1. このリポジトリまたはRelease ZIPから生成済みの `dist/index.html` をダウンロードします。
+1. GitHub Releaseの添付ファイルから `index.html` を入手します。Release公開前は、`main` ブランチの成功したGitHub Actions実行から生成物を取得できます。生成先の `dist/` はGitには含まれません。
 2. 最新のChromium系ブラウザ、Firefox、Safariで開きます。
 3. 同じファイルは後からインターネット接続なしでも利用できます。
 
