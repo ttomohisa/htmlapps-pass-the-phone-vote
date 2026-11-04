@@ -6,6 +6,8 @@
 
 [日本語版 README](README.ja.md)
 
+[v1.0.4 release notes (日本語 / English)](docs/releases/v1.0.4.md)
+
 A single-HTML voting tool for passing one phone around a group, letting each person vote without seeing anyone else's answer, and revealing only the aggregate result after everyone has voted.
 
 
@@ -15,7 +17,7 @@ A single-HTML voting tool for passing one phone around a group, letting each per
 
 GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temporary session recovery, tallying, and result display are processed locally on your device. Vote data is not sent to a server by the app.
 
-[![Pass-the-Phone Vote v1.0.3 English setup screen](assets/screenshot-en.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
+[![Pass-the-Phone Vote v1.0.4 English setup screen](assets/screenshot-en.png)](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/)
 
 ## Features
 
