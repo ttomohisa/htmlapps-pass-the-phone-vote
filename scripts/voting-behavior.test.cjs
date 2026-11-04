@@ -64,7 +64,7 @@ test('mobile hold-to-reveal stays primary and requires 1.2 seconds', async () =>
   hidden(app);
   app.frame(1200);
   assert.equal(app.screen(), 'resultScreen');
-  assert.deepEqual(state(app).options.map(x => x.votes), [1, 1]);
+  assert.deepEqual(state(app).options.map(x => x.votes), [1, 1, 0]);
 });
 
 test('mobile handoff recovery remains neutral and never stores an individual answer', async () => {
