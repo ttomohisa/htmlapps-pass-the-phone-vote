@@ -79,7 +79,7 @@ No runtime third-party library is required by the app itself.
 
 ### Result actions
 
-On phones, the result and Copy/Share actions appear before secondary actions. Expand **Save as a text file** to edit the filename and download a `.txt` file.
+On phones, **Keep the results** groups Copy, Share and the collapsed text-file download. **Vote again** separately offers the same setup or a new vote with editable settings. Only aggregate results, never individual answers, are saved or shared.
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
 
