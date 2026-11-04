@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- v1.1.0: Rework the smartphone flow with direct setup, fewer decorative cards and repeated notes, larger ballots, one-tap handoff to the next blank ballot, confirmation-based reveal, and results-first actions with collapsed text export. Keep desktop behavior and privacy protections.
+
 - Hide the “Fully local processing” badge at smartphone widths (680px and below), preserving it on desktop.
 
 - Move build information to the end of Help while preserving existing smartphone hiding, and standardize the English local-processing wording to “Fully local processing”. Keep keyboard activation of its native disclosure from being mistaken for a backdrop click.
