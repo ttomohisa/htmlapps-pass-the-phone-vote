@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refine the v1.0.4 result screen: remove the redundant aggregate-results subtitle, keep the aggregate-only export note as two complete lines on phones, group Copy/Share/.txt download, and separate the repeat/new-vote choices with explanatory sublabels.
+
 - v1.0.4: Simplify the smartphone setup and voting screens, retain the completed-vote checkmark, hide the redundant 'Secret vote' label on the ballot, and shorten the confirmation note. Keep 1.2-second hold-to-reveal (with confirmation alternative) on mobile and desktop. Preserve one-tap private handoff, results-first actions, collapsed text export, and existing privacy protections.
 
 - Hide the “Fully local processing” badge at smartphone widths (680px and below), preserving it on desktop.
