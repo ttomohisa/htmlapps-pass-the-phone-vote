@@ -27,7 +27,7 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Pause privately when switching away** — Voting and result screens are hidden when the page loses focus or is backgrounded. Press Resume screen to continue; an unfinished choice stays only in this open page’s memory. Back or reload requires choosing again. Device app-switcher previews and screenshots cannot be guaranteed private.
 - **Follow the current screen with the keyboard** — Each new voting screen focuses its heading, so you can read the context before moving to its controls.
 - **Protect against accidental input** — Vote confirmation, handoff, reveal, restart, and stop actions include guards or confirmation where needed.
-- **Reveal only when intended** — On phones, tap Show result and confirm. On desktop, use the existing hold-to-reveal control or its confirmation-based alternative.
+- **Reveal only when intended** — Hold the reveal button on phones or desktops. A confirmation-based alternative remains available if holding is difficult.
 - **Keep aggregate results** — Save a UTF-8 `.txt` file with an editable filename, copy results, use the OS share sheet when supported, or run the same vote again with counts reset.
 - **Keep dialogs usable on short screens** — Help, confirmation, and recovery pause background page scrolling until dismissed. Scroll inside Help or the confirmation/recovery body to reach its content and actions. Recovery stays open on Escape or backdrop clicks; choose Continue or Discard.
 - **Mobile-first operation** — At 680px and below, the setup and ballot take priority over decorative cards and repeated notes. The next person can open their ballot from the handoff screen in one tap. Text-file export settings stay collapsed until needed. Japanese / English supported.
@@ -62,7 +62,7 @@ No runtime third-party library is required by the app itself.
 4. Hand the phone to the first participant. They press **Vote now**, choose one option, and confirm it.
 5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person. On a phone they tap **Next person votes** to see a blank ballot; on desktop they then press **Vote now**.
 6. Repeat until everyone has voted.
-7. On a phone, tap **Show result** and confirm to reveal. On desktop, hold **Hold to reveal** or use the confirmation-based alternative.
+7. After everyone votes, hold **Hold to reveal** for 1.2 seconds on a phone or desktop. Alternatively, confirm through the fallback action.
 8. Edit the result filename and save a `.txt` file, copy or share the aggregate result, vote again with the same setup, or create a new vote.
 
 ### Vote setup
@@ -85,7 +85,7 @@ Results contain the question, each choice's vote count and whole-number percenta
 
 **Save result** downloads the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
 
-On desktop, a reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it. Phones use a normal tap followed by confirmation.
+On phones and desktops, a reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 
 On supported devices, **Share result** passes the same aggregate text to the operating system's share sheet. The app does not automatically send the result to any remote service.
 
