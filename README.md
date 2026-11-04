@@ -43,7 +43,7 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/).
 
 ### Use the download file
 
-1. Download the generated `dist/index.html` from this repository or a release archive.
+1. Download `index.html` from the GitHub Release assets, or download the latest successful `main` branch Actions build artifact and extract `dist/index.html`. Generated `dist/` files are not committed to Git.
 2. Open it in a current Chromium-based browser, Firefox, or Safari.
 3. The same file can be opened later without an internet connection.
 
