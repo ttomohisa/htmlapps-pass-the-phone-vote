@@ -61,7 +61,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 8. After the configured number of votes, show a dedicated reveal screen.
 9. On both smartphones and desktops, reveal requires a continuous 1.2-second hold with progress. A confirmation-based alternative remains available for people unable to hold.
 10. After reveal, show only aggregate results.
-11. The revealed result can be copied, saved as a UTF-8 `.txt` file with an editable filename, and shared through Web Share API when available. On mobile, copy/share precede repeat/new-vote actions; the filename-and-save area starts collapsed.
+11. The revealed result can be copied, saved as a UTF-8 `.txt` file with an editable filename, and shared through Web Share API when available. The result interface groups Copy/Share and text-file save under a "Keep the results" heading, ahead of a separate "Vote again" group. On mobile, text-file save starts collapsed.
 12. “Vote again with same setup” requires confirmation, resets aggregate counts only, and restarts from Person 1 with the same setup.
 13. “Create a new vote” remains a separate confirmed action that returns to editable setup.
 
@@ -230,5 +230,5 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - At 680px and below, hide the landing hero, local-processing badge, repeated setup instructions and secondary privacy callouts from the main workflow. The privacy and safety explanation remains in Help.
 - Remove the nested app-card treatment. Make the question and large answer targets the primary ballot content. Keep explicit vote confirmation and neutral handoff.
 - Keep the 1.2-second hold-to-reveal button visible and primary on both mobile and desktop. Preserve the confirmation-based alternative. Restore the completed-vote checkmark icon on mobile and hide the redundant ballot-header 'Secret vote' label on mobile.
-- Keep result counts and copy/share before secondary replay and text-file export. The phone export details start collapsed.
+- Remove the redundant aggregate-only subtitle above result counts. Group Copy/Share and collapsed file export under one "Keep the results" heading, before clearly separated repeat/new-vote controls with short explanations. Display the aggregate-only privacy note as two complete sentences, each on its own line on mobile.
 - Do not change vote integrity, data retention, privacy curtain or recovery semantics.
