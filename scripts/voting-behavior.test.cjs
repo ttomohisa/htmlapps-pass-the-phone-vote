@@ -21,6 +21,59 @@ function hidden(app) { assert.equal(app.screen(), 'revealScreen'); assert.equal(
 const state = app => JSON.parse(app.run('JSON.stringify(state)'));
 const warning = app => app.el('recoveryWarning');
 
+
+test('mobile handoff opens the next private ballot with one deliberate action', async () => {
+  const app = createApp(filename, { mobile: true, language: 'ja' });
+  assert.equal(app.el('resultExportDetails').open, false, 'mobile text export starts collapsed');
+  await start(app, ['和食', '洋食'], 2);
+  app.el('beginVoteButton').click();
+  app.el('voteOptions').children[0].click();
+  app.el('confirmVoteButton').click();
+  assert.equal(app.screen(), 'handoffScreen');
+  assert.equal(app.el('confirmChoice').textContent, '');
+  assert.equal(app.el('voteOptions').children.length, 0);
+  assert.equal(state(app).completed, 1);
+  app.el('nextVoterButton').click();
+  assert.equal(app.screen(), 'voteScreen', 'next participant sees their ballot without another ready step');
+  assert.equal(app.el('voteOptions').children.length, 2);
+  assert.equal(app.el('confirmChoice').textContent, '');
+  assert.equal(state(app).completed, 1, 'handoff does not add a second vote');
+  assert.deepEqual(state(app).options.map(x => x.votes), [1, 0]);
+  app.el('voteOptions').children[1].click();
+  app.el('confirmVoteButton').click();
+  assert.equal(app.screen(), 'revealScreen');
+  app.el('alternateRevealButton').click();
+  app.el('appConfirmCancel').click();
+  await app.settle();
+  assert.equal(app.screen(), 'revealScreen', 'cancel must keep tally private');
+  app.el('alternateRevealButton').click();
+  app.el('appConfirmOk').click();
+  await app.settle();
+  assert.equal(app.screen(), 'resultScreen');
+  assert.equal(app.el('resultExportDetails').open, false, 'result file options stay collapsed on phones');
+  assert.deepEqual(state(app).options.map(x => x.votes), [1, 1]);
+});
+
+test('mobile handoff recovery remains neutral and never stores an individual answer', async () => {
+  const app = createApp(filename, { mobile: true });
+  await start(app, ['Rice', 'Pasta'], 2);
+  app.el('beginVoteButton').click();
+  app.el('voteOptions').children[0].click();
+  app.el('confirmVoteButton').click();
+  app.el('nextVoterButton').click();
+  assert.equal(app.screen(), 'voteScreen');
+  const snapshot = JSON.parse(app.storage.get(key));
+  assert.equal(snapshot.phase, 'ready');
+  assert.equal(snapshot.state.completed, 1);
+  assert.equal(JSON.stringify(snapshot).includes('pendingChoiceIndex'), false);
+  app.window.dispatch('pagehide');
+  const recovered = createApp(filename, { mobile: true, storage: app.storage });
+  recovered.el('sessionRecoveryContinue').click();
+  assert.equal(recovered.screen(), 'readyScreen', 'reload requires a fresh explicit start');
+  assert.equal(recovered.el('confirmChoice').textContent, '');
+  assert.equal(state(recovered).completed, 1);
+});
+
 test('normal voting remains aggregate-only with duplicate-submit and private-DOM guards', async () => {
   const app = createApp(filename); await start(app); app.el('beginVoteButton').click(); app.el('voteOptions').children[1].click();
   assert.equal(state(app).completed, 0); assert.equal(app.el('confirmChoice').textContent, 'Pasta'); app.el('confirmVoteButton').click(); app.el('confirmVoteButton').click();
