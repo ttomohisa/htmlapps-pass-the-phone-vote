@@ -456,7 +456,7 @@
       window.addEventListener('pagehide',()=>{showPrivacyCurtain();if(state&&liveStateValid()){const active=privacyPause?.screen||activeScreenId();const phase=active==='handoffScreen'?'handoff':active==='revealScreen'?'reveal':active==='resultScreen'?'result':'ready';saveVoteSession(phase);if(active==='voteScreen'||active==='confirmVoteScreen'){renderReadyScreen();if(privacyPause)privacyPause.screen='readyScreen';else showScreen('readyScreen')}}else if(state){clearVoteSession()}clearPrivateVoteUi();cancelRevealHold()});
       window.addEventListener('pageshow',event=>{if(!event.persisted||!state)return;showPrivacyCurtain();const active=privacyPause?.screen||activeScreenId();if(active==='voteScreen'||active==='confirmVoteScreen'){clearPrivateVoteUi();saveVoteSession('ready');renderReadyScreen();if(privacyPause)privacyPause.screen='readyScreen';else showScreen('readyScreen')}if(privacyPause)focusCurrentScreen()});
       $('#versionBadge').textContent=`v${APP_CONFIG.version}`;$('#buildVersion').textContent=APP_CONFIG.version;$('#builtAt').textContent=BUILD_MANIFEST.generatedAtUtc||'—';$('#dependencyCount').textContent=String(BUILD_MANIFEST.dependencies?.length||0);
-      renderOptionInputs();renderPresetState();applyLanguage();if(window.matchMedia('(max-width:680px)').matches)$('#resultExportDetails').open=false;initializeSessionRecovery();
+      renderOptionInputs();renderPresetState();applyLanguage();const exportMedia=window.matchMedia('(max-width:680px)');$('#resultExportDetails').open=!exportMedia.matches;exportMedia.addEventListener?.('change',event=>{$('#resultExportDetails').open=!event.matches});initializeSessionRecovery();
     })();
   </script>
 </body>
