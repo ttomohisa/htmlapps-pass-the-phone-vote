@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- v1.1.0: Rework the smartphone flow with direct setup, fewer decorative cards and repeated notes, larger ballots, one-tap handoff to the next blank ballot, confirmation-based reveal, and results-first actions with collapsed text export. Keep desktop behavior and privacy protections.
+- v1.0.4: Simplify the smartphone setup and voting screens, retain the completed-vote checkmark, hide the redundant 'Secret vote' label on the ballot, and shorten the confirmation note. Keep 1.2-second hold-to-reveal (with confirmation alternative) on mobile and desktop. Preserve one-tap private handoff, results-first actions, collapsed text export, and existing privacy protections.
 
 - Hide the “Fully local processing” badge at smartphone widths (680px and below), preserving it on desktop.
 
