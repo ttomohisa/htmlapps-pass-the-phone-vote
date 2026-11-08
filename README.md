@@ -33,6 +33,8 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Mobile-first operation** — The UI is designed for small phone screens, long labels, safe areas, large touch targets, and Japanese / English use. Build information and the footer stay out of the way at phone widths (680px and below).
 - **Fully local single HTML** — No runtime CDN, analytics, telemetry, remote fonts, or application API calls are required.
 
+The screen changes with the voting stage: setup focuses on entering the poll, voting on private choices and handoff, and the final tally on saving or sharing before starting over.
+
 ## Quick start
 
 ### Use the web demo
@@ -63,7 +65,7 @@ No runtime third-party library is required by the app itself.
 5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person.
 6. Repeat until everyone has voted.
 7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
-8. Edit the result filename and save a `.txt` file, copy or share the aggregate result, vote again with the same setup, or create a new vote.
+8. In **Keep the results**, copy, share, or save the aggregate results as a `.txt` file with an editable filename. Use **Vote again** only after preserving the result you need.
 
 ### Vote setup
 

@@ -5,3 +5,6 @@ dist/*
 *.part
 .DS_Store
 Thumbs.db
+
+# Impeccable downloads its engine for the current development platform.
+.agents/skills/impeccable/scripts/bin/

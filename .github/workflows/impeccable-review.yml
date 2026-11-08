@@ -1,0 +1,54 @@
+name: Impeccable design review
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'PRODUCT.md'
+      - 'DESIGN.md'
+      - 'docs/IMPECCABLE-REVIEW.md'
+      - '.github/workflows/impeccable-review.yml'
+permissions:
+  contents: read
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install official Impeccable CLI and record version
+        run: |
+          mkdir -p test-results/impeccable
+          npx --yes impeccable --version | tee test-results/impeccable/version.txt
+      - name: Run deterministic design diagnostics
+        shell: bash
+        run: |
+          set +e
+          npx --yes impeccable detect --json src/index.template.html > test-results/impeccable/detect.json 2> test-results/impeccable/stderr.txt
+          result=$?
+          set -e
+          echo "Impeccable detector exit: $result (0=clean, 2=findings, 1=scan failure)"
+          if [ "$result" -ne 0 ] && [ "$result" -ne 2 ]; then
+            cat test-results/impeccable/stderr.txt
+            exit "$result"
+          fi
+          echo "Detector findings are evidence for review, not an aesthetic pass/fail."
+          python - <<'PY'
+          import json
+          with open("test-results/impeccable/detect.json", encoding="utf-8") as file:
+              data = json.load(file)
+          print("DETECT_JSON_SUMMARY=" + json.dumps(data, ensure_ascii=False)[:14000])
+          PY
+      - name: Upload design diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: impeccable-design-diagnostics
+          path: test-results/impeccable/
+          if-no-files-found: ignore
+          retention-days: 14
