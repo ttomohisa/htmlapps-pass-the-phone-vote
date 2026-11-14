@@ -21,3 +21,18 @@ test('validation covers Node.js 22 and 24 while preview pins Node.js 24', () => 
   assert.match(validation, /name: standalone-html-.*matrix\.node/);
   assert.match(preview, /uses: actions\/setup-node@(?:v6|249970729cb0ef3589644e2896645e5dc5ba9c38)\s+with:\s+node-version: 24\b/);
 });
+
+test('release workflow verifies stable versions, existing releases and assets before publishing', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const release = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'release-on-main.yml'), 'utf8');
+  assert.match(release, /branches: \[main\]/);
+  assert.match(release, /app\.config\.json/);
+  assert.match(release, /should_release/);
+  assert.match(release, /getReleaseByTag/);
+  assert.match(release, /sha256sum -c SHA256SUMS\.txt/);
+  assert.match(release, /gh release create/);
+  assert.match(release, /\.self-extract\.html/);
+  assert.match(release, /--target "\$GITHUB_SHA"/);
+  assert.match(release, /contents: write/);
+});

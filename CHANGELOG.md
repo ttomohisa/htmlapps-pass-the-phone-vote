@@ -1,18 +1,22 @@
 # Changelog
 
-## Unreleased
+## 1.0.4
 
+- Add version-gated automatic GitHub Releases on `main`: verified HTML, self-extracting HTML, ZIP, and SHA-256 checksums.
+- Remove the participant-stepper +/- button borders and fills, retaining 44px touch targets and visible keyboard focus.
 - Align the three quick-setup presets at equal widths on phones, replace the paste-list and text-save disclosure icons, shorten the ready-screen instruction, and reorganize result actions into compact primary and utility rows in both languages.
 
 - Simplify the Japanese and English voting UI: hide the introductory hero after setup, remove redundant explanatory copy and question-card borders, make pasted-list entry borderless, refine the participant stepper and handoff icon, and collapse text-file export by default.
 - Reject invalid manual participant counts rather than silently correcting them, and enlarge mobile dialog close and Undo hit areas.
 - Scope the privacy curtain to active voting stages. Reveal and results remain visible when the page loses focus, while interrupted holds still cancel.
 
+## 1.0.3
+
 - Hide the “Fully local processing” badge at smartphone widths (680px and below), preserving it on desktop.
 
 - Move build information to the end of Help while preserving existing smartphone hiding, and standardize the English local-processing wording to “Fully local processing”. Keep keyboard activation of its native disclosure from being mistaken for a backdrop click.
 
-- 1.0.3: Add a neutral privacy screen when switching away from an active vote/result, with explicit same-page resume and memory-only unfinished selections. Keep Back/reload/BFCache recovery neutral, cancel interrupted dialogs/reveal holds, and reject stale choice/async events.
+- Add a neutral privacy screen when switching away from an active vote/result, with explicit same-page resume and memory-only unfinished selections. Keep Back/reload/BFCache recovery neutral, cancel interrupted dialogs/reveal holds, and reject stale choice/async events.
 - Move focus to neutral screen headings after transitions, respecting newer focus and dialogs; remove broad/private live announcements.
 - Preserve dollar signs and placeholder-shaped question text literally in recovery messages using one-pass interpolation.
 
@@ -20,7 +24,7 @@
 
 - Clarify Japanese and English help by removing internal layout, implementation, and audit commentary while preserving usage guidance and cautions.
 
-## Unreleased
+## 1.0.2 and earlier maintenance
 
 - 1.0.2: Paused root/body background scrolling while Help, confirmation, or recovery is modal. Bounded confirmation/recovery shells keep their headers visible and let their bodies scroll through both actions on short screens, preserving existing forced-recovery decisions and vote state. Added bilingual Help/docs and source/readable/self-extract/root modal regressions. Prevented Escape from silently dismissing reload recovery before Continue/Discard, including non-cancelable native close requests, with a recovery-only Escape fallback and bilingual decision regressions.
 

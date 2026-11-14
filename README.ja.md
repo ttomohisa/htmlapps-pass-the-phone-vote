@@ -114,6 +114,10 @@ Web Share API対応端末では **結果を共有** から同じ集計テキス�
 
 リリース前のリポジトリチェックでは、単一HTML、必須アセット、バージョン表記、CSPなどテンプレート側の契約を検証します。
 
+## マージ後の自動リリース
+
+`app.config.json` のバージョンを上げたPRを `main` にマージすると、`.github/workflows/release-on-main.yml` が実行されます。リポジトリ検査に成功した場合のみ、`v<バージョン>` タグとGitHub Releaseを作成し、通常HTML、自己展開HTML、ZIP、SHA-256チェックサムを公開します。同じバージョンが公開済みなら再作成せず、バージョンを変えていないpushでReleaseを重複作成しません。失敗した場合は **Actions → Create GitHub Release → Run workflow** から `main` を指定して再実行できます。GitHub Pagesへの反映は別のワークフローで行います。
+
 ## 開発とビルド
 
 ```text

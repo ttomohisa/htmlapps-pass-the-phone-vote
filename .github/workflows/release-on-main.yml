@@ -1,0 +1,180 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pass-the-phone-vote-releases
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.metadata.outputs.tag }}
+      version: ${{ steps.metadata.outputs.version }}
+      should_release: ${{ steps.metadata.outputs.should_release }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verify version and existing release
+        id: metadata
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('app.config.json', 'utf8'));
+            const version = config.version;
+            if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) {
+              throw new Error('app.config.json must use stable SemVer (MAJOR.MINOR.PATCH)');
+            }
+            const tag = 'v' + version;
+            core.setOutput('version', version);
+            core.setOutput('tag', tag);
+            const { owner, repo } = context.repo;
+
+            try {
+              await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+              core.notice('Release ' + tag + ' already exists; no new release is needed.');
+              core.setOutput('should_release', 'false');
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            // Repair a tag-only interrupted release only at its original commit.
+            try {
+              const { data: existing } = await github.rest.git.getRef({ owner, repo, ref: 'tags/' + tag });
+              if (existing.object.type !== 'commit' || existing.object.sha !== context.sha) {
+                throw new Error('Tag ' + tag + ' already exists at another revision; refusing to change it');
+              }
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            core.setOutput('should_release', 'true');
+
+  build:
+    needs: inspect
+    if: needs.inspect.outputs.should_release == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout release revision
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Build and verify release files
+        shell: pwsh
+        run: ./scripts/check-repository.ps1
+
+      - name: Package standalone files and checksums
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.inspect.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $prefix = "htmlapps-pass-the-phone-vote-v$env:RELEASE_VERSION"
+          $out = Join-Path $PWD 'release-assets'
+          $bundle = Join-Path $PWD 'release-bundle'
+          New-Item -ItemType Directory -Force -Path $out, $bundle | Out-Null
+
+          Copy-Item -LiteralPath 'dist/index.html' -Destination (Join-Path $out "$prefix.html")
+          Copy-Item -LiteralPath 'dist/index.self-extract.html' -Destination (Join-Path $out "$prefix.self-extract.html")
+
+          $zipFiles = @(
+            @{ Source = 'dist/index.html'; Name = 'index.html' },
+            @{ Source = 'dist/index.self-extract.html'; Name = 'index.self-extract.html' },
+            @{ Source = 'dist/dependency-manifest.json'; Name = 'dependency-manifest.json' },
+            @{ Source = 'dist/self-extract-manifest.json'; Name = 'self-extract-manifest.json' },
+            @{ Source = 'README.md'; Name = 'README.md' },
+            @{ Source = 'README.ja.md'; Name = 'README.ja.md' },
+            @{ Source = 'LICENSE'; Name = 'LICENSE' },
+            @{ Source = 'THIRD_PARTY_NOTICES.md'; Name = 'THIRD_PARTY_NOTICES.md' }
+          )
+          foreach ($entry in $zipFiles) {
+            if (!(Test-Path -LiteralPath $entry.Source -PathType Leaf)) {
+              throw "Release file is missing: $($entry.Source)"
+            }
+            Copy-Item -LiteralPath $entry.Source -Destination (Join-Path $bundle $entry.Name)
+          }
+          $zipPath = Join-Path $out "$prefix.zip"
+          Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zipPath
+
+          $assetNames = @("$prefix.html", "$prefix.self-extract.html", "$prefix.zip")
+          $lines = foreach ($file in $assetNames) {
+            $hash = (Get-FileHash -LiteralPath (Join-Path $out $file) -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $file"
+          }
+          [System.IO.File]::WriteAllText(
+            (Join-Path $out 'SHA256SUMS.txt'),
+            (($lines -join [char]10) + [char]10),
+            [System.Text.UTF8Encoding]::new($false)
+          )
+
+      - name: Upload versioned release assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-assets-${{ needs.inspect.outputs.tag }}
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: [inspect, build]
+    if: needs.inspect.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified release assets
+        uses: actions/download-artifact@v7
+        with:
+          name: release-assets-${{ needs.inspect.outputs.tag }}
+          path: release-assets/
+
+      - name: Verify checksums, create tag, and publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.inspect.outputs.version }}
+          RELEASE_TAG: ${{ needs.inspect.outputs.tag }}
+        run: |
+          set -euo pipefail
+          prefix="htmlapps-pass-the-phone-vote-v$RELEASE_VERSION"
+          for file in "$prefix.html" "$prefix.self-extract.html" "$prefix.zip" "SHA256SUMS.txt"; do
+            test -s "release-assets/$file"
+          done
+          (cd release-assets && sha256sum -c SHA256SUMS.txt)
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; nothing to create."
+            exit 0
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            "release-assets/$prefix.html" \
+            "release-assets/$prefix.self-extract.html" \
+            "release-assets/$prefix.zip" \
+            "release-assets/SHA256SUMS.txt" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Pass-the-Phone Vote $RELEASE_TAG" \
+            --generate-notes
+
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName,assets,url

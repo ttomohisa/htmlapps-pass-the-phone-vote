@@ -23,6 +23,15 @@ async function runCase(browser, file, language, width) {
     await page.locator('#questionInput').waitFor();
     if (await page.locator('html').getAttribute('lang') !== language) await page.locator('#languageButton').click();
     assert.equal(await page.locator('.page-intro').isVisible(), true, label + ': setup hero');
+    const plus = await page.locator('#increaseParticipants').evaluate(el => ({
+      border: getComputedStyle(el).borderTopWidth,
+      background: getComputedStyle(el).backgroundColor,
+      width: el.getBoundingClientRect().width,
+      height: el.getBoundingClientRect().height,
+    }));
+    assert.equal(plus.border, '0px', label + ': borderless plus control');
+    assert.equal(plus.background, 'rgba(0, 0, 0, 0)', label + ': transparent plus control');
+    assert.ok(plus.width >= 44 && plus.height >= 44, label + ': participant touch target');
     assert.equal(await page.locator('[data-i18n="setupEyebrow"]').count(), 0, label + ': removed setup eyebrow');
     assert.equal(await page.locator('#choiceListDetails').evaluate(el => getComputedStyle(el).borderTopWidth), '0px', label + ': borderless paste list');
     const presetWidths = await page.locator('.preset-button').evaluateAll(buttons => buttons.map(el => el.getBoundingClientRect().width));

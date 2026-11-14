@@ -115,6 +115,10 @@ The repository includes a workflow for building and deploying the standalone app
 
 The repository checks verify the standalone output, required assets, version markers, CSP expectations, and other template contracts before release.
 
+## Automatic GitHub Releases
+
+Merging a PR that changes `app.config.json` to a new stable version on `main` triggers `.github/workflows/release-on-main.yml`. After the repository checks pass, the workflow creates the `v<version>` tag and a GitHub Release with readable HTML, self-extracting HTML, a ZIP distribution, and SHA-256 checksums. Already published versions are skipped, so pushes without a version bump do not create duplicate releases. If a release fails, use **Actions → Create GitHub Release → Run workflow** on `main` to retry. GitHub Pages deployment is separate.
+
 ## Development and build layout
 
 ```text
