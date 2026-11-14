@@ -63,7 +63,7 @@ No runtime third-party library is required by the app itself.
 5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person.
 6. Repeat until everyone has voted.
 7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
-8. Copy or share the aggregate result, or expand **Save as text file** to edit a filename and save `.txt`. You can also repeat the vote or create a new vote.
+8. Copy or share the aggregate result, or expand **Save result as text** to edit a filename and save `.txt`. You can also repeat the vote or create a new vote.
 
 ### Vote setup
 
@@ -81,7 +81,7 @@ No runtime third-party library is required by the app itself.
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
 
-Expand **Save as text file** and select **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
+Expand **Save result as text** and select **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
 
 A reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 
