@@ -77,11 +77,7 @@ $checksumPath = Join-Path $out 'SHA256SUMS.txt'
 )
 
 foreach ($line in [System.IO.File]::ReadAllLines($checksumPath, [System.Text.Encoding]::UTF8)) {
-  if ($line -match '^([0-9a-f]{64})  (.+)
-}
-
-Write-Host "[OK] Versioned release archive and SHA-256 checksums verified: $prefix" -ForegroundColor Green
-) {
+  if ($line -match '^([0-9a-f]{64})  (.+)$') {
     $expectedHash = $Matches[1]
     $assetName = $Matches[2]
     $actualHash = (Get-FileHash -LiteralPath (Join-Path $out $assetName) -Algorithm SHA256).Hash.ToLowerInvariant()
