@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Simplify the Japanese and English voting UI: hide the introductory hero after setup, remove redundant explanatory copy and question-card borders, make pasted-list entry borderless, refine the participant stepper and handoff icon, and collapse text-file export by default.
+- Reject invalid manual participant counts rather than silently correcting them, and enlarge mobile dialog close and Undo hit areas.
+- Scope the privacy curtain to active voting stages. Reveal and results remain visible when the page loses focus, while interrupted holds still cancel.
+
 - Hide the “Fully local processing” badge at smartphone widths (680px and below), preserving it on desktop.
 
 - Move build information to the end of Help while preserving existing smartphone hiding, and standardize the English local-processing wording to “Fully local processing”. Keep keyboard activation of its native disclosure from being mistaken for a backdrop click.
