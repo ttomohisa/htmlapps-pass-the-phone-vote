@@ -44,7 +44,7 @@ const interruptions = {
   'history navigation': app => app.window.dispatch('popstate'),
   'pagehide': app => app.window.dispatch('pagehide'),
 };
-for (const [name, interrupt] of Object.entries(interruptions)) test(`hold canceled by ${name}, including an already queued callback`, async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); const stale = [...app.frames.values()][0]; interrupt(app); stale(1500); app.frame(3000); if(['window blur','hidden page','pagehide'].includes(name)){assert.equal(app.screen(),'privacyScreen');assert.equal(app.el('resultList').children.length,0);app.el('privacyResumeButton').click()}hidden(app); });
+for (const [name, interrupt] of Object.entries(interruptions)) test(`hold canceled by ${name}, including an already queued callback`, async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); const stale = [...app.frames.values()][0]; interrupt(app); stale(1500); app.frame(3000); hidden(app); });
 for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) test(`pointer hold canceled by ${event}`, async () => { const app = createApp(filename); await completed(app); app.frame(100); app.el('revealButton').dispatch('pointerdown', { pointerId: 7 }); const stale = [...app.frames.values()][0]; app.el('revealButton').dispatch(event, { pointerId: 7 }); stale(2000); hidden(app); });
 test('stale frame cannot advance a newer reveal gesture', async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); const stale = [...app.frames.values()][0]; app.el('revealButton').dispatch('keyup', { key: ' ' }); app.frame(200); hold(app); stale(9999); hidden(app); app.frame(1399); hidden(app); app.frame(1400); assert.equal(app.screen(), 'resultScreen'); });
 test('unrelated pointer/key releases do not complete or cancel the held gesture', async () => { const app = createApp(filename); await completed(app); app.frame(100); app.el('revealButton').dispatch('pointerdown', { pointerId: 7 }); app.el('revealButton').dispatch('pointerup', { pointerId: 8 }); app.frame(1300); assert.equal(app.screen(), 'resultScreen'); });
@@ -273,39 +273,50 @@ for (const language of ['en', 'ja']) for (const event of ['blur', 'hidden']) {
   });
 }
 for (const target of ['readyScreen', 'voteScreen', 'handoffScreen', 'revealScreen', 'resultScreen']) {
-  test(`privacy pause resumes ${target} with unchanged counts`, async () => {
+  test(`focus-loss privacy applies only to active voting: ${target}`, async () => {
     const app = createApp(filename); await start(app);
     if (target === 'voteScreen') app.el('beginVoteButton').click();
     if (target === 'handoffScreen') vote(app);
     if (target === 'revealScreen' || target === 'resultScreen') { vote(app); vote(app); }
     if (target === 'resultScreen') { app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); }
-    assert.equal(app.screen(), target); const before = state(app);
-    app.window.dispatch('blur'); assert.equal(app.screen(), 'privacyScreen');
-    app.el('saveResultButton').click(); app.el('nextVoterButton').click(); app.el('beginVoteButton').click();
-    assert.equal(app.downloads.length, 0); assert.deepEqual(state(app), before);
-    app.el('privacyResumeButton').click(); assert.equal(app.screen(), target); assert.deepEqual(state(app), before);
+    assert.equal(app.screen(), target);
+    const before = state(app);
+    app.window.dispatch('blur');
+    if (target === 'revealScreen' || target === 'resultScreen') {
+      assert.equal(app.screen(), target, 'reveal and result screens stay visible');
+      assert.deepEqual(state(app), before);
+      assert.equal(app.el('resultExportDetails').open, false, 'export begins collapsed');
+    } else {
+      assert.equal(app.screen(), 'privacyScreen');
+      app.el('saveResultButton').click(); app.el('nextVoterButton').click(); app.el('beginVoteButton').click();
+      assert.equal(app.downloads.length, 0);
+      assert.deepEqual(state(app), before);
+      app.el('privacyResumeButton').click();
+      assert.equal(app.screen(), target);
+      assert.deepEqual(state(app), before);
+    }
   });
 }
 for (const language of ['en', 'ja']) test(`paused result resumes in the selected language without changing filename (${language})`, async () => {
   const app = createApp(filename, { language }); await completed(app);
   app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle();
   app.input(app.el('outputFilename'), 'my-vote.txt'); app.window.dispatch('blur');
-  app.el('languageButton').click(); app.el('privacyResumeButton').click();
+  assert.equal(app.screen(), 'resultScreen'); app.el('languageButton').click();
   assert.equal(app.screen(), 'resultScreen');
   assert.match(app.el('resultList').textContent, language === 'en' ? /票/ : /vote/);
   assert.equal(app.el('outputFilename').value, 'my-vote.txt');
 });
-test('privacy cancels ordinary dialogs and ignores already accepted async transitions', async () => {
-  const app = createApp(filename); await completed(app);
-  app.el('alternateRevealButton').click(); app.el('appConfirmOk').click();
-  app.window.dispatch('blur'); await app.settle();
-  assert.equal(app.screen(), 'privacyScreen'); assert.equal(app.el('resultList').children.length, 0);
-  app.el('privacyResumeButton').click(); assert.equal(app.screen(), 'revealScreen');
-  app.document.querySelector('.abort-vote-button').click(); assert.equal(app.el('appConfirmDialog').open, true);
-  app.window.dispatch('blur'); await app.settle();
-  assert.equal(app.el('appConfirmDialog').open, false); assert.equal(state(app).completed, 2);
-  app.el('privacyResumeButton').click(); app.el('helpButton').click();
-  app.window.dispatch('blur'); assert.equal(app.el('helpDialog').open, false); assert.equal(app.screen(), 'privacyScreen');
+test('an interrupted reveal hold stays hidden and the confirmation alternative remains available', async () => {
+  const app = createApp(filename); await completed(app); app.frame(100); hold(app);
+  const stale = [...app.frames.values()][0]; app.window.dispatch('blur'); stale(2000); app.frame(3000);
+  hidden(app);
+  app.el('alternateRevealButton').click();
+  assert.equal(app.el('appConfirmDialog').open, true);
+  app.window.dispatch('blur'); assert.equal(app.screen(), 'revealScreen');
+  assert.equal(app.el('appConfirmDialog').open, true);
+  app.el('appConfirmCancel').click(); await app.settle(); hidden(app);
+  app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle();
+  assert.equal(app.screen(), 'resultScreen'); app.window.dispatch('blur'); assert.equal(app.screen(), 'resultScreen');
 });
 test('Back while paused discards only the unfinished answer and keeps the curtain', async () => {
   const app = createApp(filename); await start(app); vote(app); app.el('nextVoterButton').click();
@@ -322,10 +333,10 @@ for (const target of ['confirmVoteScreen', 'handoffScreen', 'revealScreen', 'res
     if (target === 'resultScreen') { app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); }
     app.window.dispatch('blur'); app.window.dispatch('pagehide'); app.window.dispatch('pageshow', { persisted: true });
     const expected = target === 'confirmVoteScreen' ? 'readyScreen' : target;
-    assert.equal(app.screen(), 'privacyScreen'); assert.equal(app.run('pendingChoiceIndex'), null);
+    assert.equal(app.screen(), ['revealScreen', 'resultScreen'].includes(target) ? target : 'privacyScreen'); assert.equal(app.run('pendingChoiceIndex'), null);
     const restored = createApp(filename, { storage: app.storage }); restored.el('sessionRecoveryContinue').click();
     assert.equal(restored.screen(), expected); assert.equal(restored.el('confirmChoice').textContent, '');
-    app.el('privacyResumeButton').click(); assert.equal(app.screen(), expected);
+    if (!['revealScreen', 'resultScreen'].includes(target)) app.el('privacyResumeButton').click(); assert.equal(app.screen(), expected);
   });
 }
 test('old option buttons cannot select a choice after privacy resume', async () => {
@@ -371,5 +382,38 @@ for (const language of ['en', 'ja']) for (const phase of ['ready', 'result']) {
     assert.equal(app.el('sessionRecoveryMessage').children.length, 0);
   });
 }
+
+test('manual participant counts are validated rather than silently coerced', async () => {
+  const app = createApp(filename); setup(app);
+  for (const invalid of ['', '1', '101', '2.5', '-3', 'abc']) {
+    app.input(app.el('participantCount'), invalid);
+    app.el('startVoteButton').click();
+    assert.equal(app.screen(), 'setupScreen');
+    assert.equal(app.el('appConfirmDialog').open, false);
+    assert.equal(app.el('participantCount').getAttribute('aria-invalid'), 'true');
+    assert.equal(app.el('participantCount').value, invalid);
+  }
+  app.input(app.el('participantCount'), '2'); app.el('decreaseParticipants').click();
+  assert.equal(app.el('participantCount').value, '2');
+  app.el('increaseParticipants').click(); assert.equal(app.el('participantCount').value, '3');
+  app.el('startVoteButton').click(); assert.equal(app.el('appConfirmDialog').open, true);
+  app.el('appConfirmOk').click(); await app.settle();
+  assert.equal(state(app).participants, 3);
+});
+test('hero is setup-only, list is minimal, and result save begins collapsed', async () => {
+  const app = createApp(filename);
+  assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
+  assert.ok(app.el('choiceListDetails').querySelector('summary svg'));
+  for (const key of ['setupEyebrow','readyPrivacy','votePrivacy','yourChoice','confirmVoteNote','resultStillHidden','holdToRevealHint','aggregateOnly','helpModalScroll']) {
+    assert.equal(app.document.querySelector('[data-i18n="' + key + '"]'), null, 'removed label: ' + key);
+  }
+  await completed(app);
+  assert.equal(app.document.body.classList.contains('vote-in-progress'), true);
+  app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle();
+  assert.equal(app.el('resultExportDetails').open, false);
+  assert.equal(app.el('saveResultButton').disabled, false);
+  app.el('newVoteButton').click(); app.el('appConfirmOk').click(); await app.settle();
+  assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
+});
 
 (async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();

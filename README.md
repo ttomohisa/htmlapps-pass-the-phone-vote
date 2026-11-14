@@ -24,7 +24,7 @@ GitHub Pages delivers the initial HTML. After it loads, vote setup, voting, temp
 - **Do not keep voter-to-choice history** — A confirmed vote increments only the selected option's aggregate count. The app does not store records such as `person 1 → option A`.
 - **Set up common votes quickly** — Start from Yes / No, Either / Or, or a custom vote with 2–10 choices and 2–100 participants. Undo an accidental choice deletion or preset replacement before making another edit.
 - **Recover safely after reloads** — `sessionStorage` keeps only aggregate counts and safe progress state. Unconfirmed selections are not written to recovery storage.
-- **Pause privately when switching away** — Voting and result screens are hidden when the page loses focus or is backgrounded. Press Resume screen to continue; an unfinished choice stays only in this open page’s memory. Back or reload requires choosing again. Device app-switcher previews and screenshots cannot be guaranteed private.
+- **Pause privately while voting** — Waiting, ballot, answer confirmation, and handoff screens are covered when the page loses focus. Press Resume screen to continue. Reveal and result screens remain visible, while an interrupted reveal hold is cancelled. An unfinished choice stays only in this open page’s memory. Back or reload requires choosing again. Device app-switcher previews and screenshots cannot be guaranteed private.
 - **Follow the current screen with the keyboard** — Each new voting screen focuses its heading, so you can read the context before moving to its controls.
 - **Protect against accidental input** — Vote confirmation, handoff, reveal, restart, and stop actions include guards or confirmation where needed.
 - **Reveal only when intended** — Hold the reveal button to open results, with a confirmation-based alternative for users who cannot perform a hold gesture.
@@ -57,13 +57,13 @@ No runtime third-party library is required by the app itself.
 ## Usage
 
 1. Optionally choose **Yes / No** or **Either / Or** from Quick setup.
-2. Enter a question, 2–10 choices, and a participant count from 2–100.
+2. Enter a question, 2–10 choices, and an integer participant count from 2–100. Invalid manual counts are rejected rather than silently corrected.
 3. Press **Start voting** and review the setup before beginning.
 4. Hand the phone to the first participant. They press **Vote now**, choose one option, and confirm it.
 5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person.
 6. Repeat until everyone has voted.
 7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
-8. Edit the result filename and save a `.txt` file, copy or share the aggregate result, vote again with the same setup, or create a new vote.
+8. Copy or share the aggregate result, or expand **Save result as text** to edit a filename and save `.txt`. You can also repeat the vote or create a new vote.
 
 ### Vote setup
 
@@ -81,7 +81,7 @@ No runtime third-party library is required by the app itself.
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
 
-**Save result** downloads the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
+Expand **Save result as text** and select **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
 
 A reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 
@@ -114,6 +114,10 @@ The repository includes a workflow for building and deploying the standalone app
 4. After a successful deployment, the app is available at `https://ttomohisa.github.io/htmlapps-pass-the-phone-vote/`.
 
 The repository checks verify the standalone output, required assets, version markers, CSP expectations, and other template contracts before release.
+
+## Automatic GitHub Releases
+
+Merging a PR that changes `app.config.json` to a new stable version on `main` triggers `.github/workflows/release-on-main.yml`. After the repository checks pass, the workflow creates the `v<version>` tag and a GitHub Release with readable HTML, self-extracting HTML, a ZIP distribution, and SHA-256 checksums. Already published versions are skipped, so pushes without a version bump do not create duplicate releases. If a release fails, use **Actions → Create GitHub Release → Run workflow** on `main` to retry. GitHub Pages deployment is separate.
 
 ## Development and build layout
 

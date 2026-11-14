@@ -1,0 +1,142 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pass-the-phone-vote-releases
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.metadata.outputs.tag }}
+      version: ${{ steps.metadata.outputs.version }}
+      should_release: ${{ steps.metadata.outputs.should_release }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verify version and existing release
+        id: metadata
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('app.config.json', 'utf8'));
+            const version = config.version;
+            if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) {
+              throw new Error('app.config.json must use stable SemVer (MAJOR.MINOR.PATCH)');
+            }
+            const tag = 'v' + version;
+            core.setOutput('version', version);
+            core.setOutput('tag', tag);
+            const { owner, repo } = context.repo;
+
+            try {
+              await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+              core.notice('Release ' + tag + ' already exists; no new release is needed.');
+              core.setOutput('should_release', 'false');
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            // Repair a tag-only interrupted release only at its original commit.
+            try {
+              const { data: existing } = await github.rest.git.getRef({ owner, repo, ref: 'tags/' + tag });
+              if (existing.object.type !== 'commit' || existing.object.sha !== context.sha) {
+                throw new Error('Tag ' + tag + ' already exists at another revision; refusing to change it');
+              }
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            core.setOutput('should_release', 'true');
+
+  build:
+    needs: inspect
+    if: needs.inspect.outputs.should_release == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout release revision
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Build and verify release files
+        shell: pwsh
+        run: ./scripts/check-repository.ps1
+
+      - name: Package standalone files and checksums
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.inspect.outputs.version }}
+        run: ./scripts/package-release.ps1 -Version "$env:RELEASE_VERSION"
+
+      - name: Upload versioned release assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-assets-${{ needs.inspect.outputs.tag }}
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: [inspect, build]
+    if: needs.inspect.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified release assets
+        uses: actions/download-artifact@v7
+        with:
+          name: release-assets-${{ needs.inspect.outputs.tag }}
+          path: release-assets/
+
+      - name: Verify checksums, create tag, and publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.inspect.outputs.version }}
+          RELEASE_TAG: ${{ needs.inspect.outputs.tag }}
+        run: |
+          set -euo pipefail
+          prefix="htmlapps-pass-the-phone-vote-v$RELEASE_VERSION"
+          for file in "$prefix.html" "$prefix.self-extract.html" "$prefix.zip" "SHA256SUMS.txt"; do
+            test -s "release-assets/$file"
+          done
+          (cd release-assets && sha256sum -c SHA256SUMS.txt)
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; nothing to create."
+            exit 0
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            "release-assets/$prefix.html" \
+            "release-assets/$prefix.self-extract.html" \
+            "release-assets/$prefix.zip" \
+            "release-assets/SHA256SUMS.txt" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Pass-the-Phone Vote $RELEASE_TAG" \
+            --generate-notes
+
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json tagName,assets,url

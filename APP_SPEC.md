@@ -4,7 +4,7 @@
 
 - **Name:** Pass-the-Phone Vote
 - **Japanese name:** スマホ回し投票
-- **Version:** 1.0.3
+- **Version:** 1.0.4
 - **One-sentence purpose:** One phone is passed around for a private in-person vote, and only the final aggregate result is revealed after everyone has voted.
 - **Primary users:** Families, friends, small teams, classrooms, workshops, and other co-located small groups.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`
@@ -29,11 +29,11 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 
 ### Private pause and screen transitions
 
-- When the active vote or revealed result loses window focus, becomes hidden, or is leaving the page, replace it with a neutral privacy screen. Do not resume automatically when focus or visibility returns.
+- During ready, ballot, confirmation, and handoff stages, losing focus or backgrounding the page replaces the screen with a neutral privacy curtain. Do not resume automatically when focus or visibility returns. Reveal and result screens stay visible, while interrupted reveal holds still cancel.
 - Switching away within the same live page keeps the current unconfirmed selection only in memory and removes its displayed answer and choice buttons. Explicit Resume restores the same participant's unfinished screen without adding a vote.
 - The pause retains the originating screen and session identity, cancels reveal gestures and ordinary confirmations/Help, and rejects stale asynchronous work and detached choice buttons. Repeated blur/hidden events never overwrite the originating screen.
 - Browser Back or page exit discards any unconfirmed choice and makes the paused target the same participant's neutral ready screen. BFCache return stays masked until Resume. Reload recovery retains its existing Continue/Discard flow and stores only the underlying safe aggregate phase, never the curtain or an unfinished choice.
-- The curtain applies after voting starts, including revealed results. Setup and the explicit reload-recovery decision retain their existing behavior. This is a local visual precaution, not authentication or a guarantee against operating-system app-switcher previews/screenshots.
+- The curtain applies only during ready/ballot/confirmation/handoff, not during setup, reveal, results, or the explicit reload-recovery decision. It is a local visual precaution, not authentication or a guarantee against operating-system app-switcher previews/screenshots.
 - Screen transitions focus the new screen's heading, never a consequential action. Queued focus must respect newer screens, newer user focus, open dialogs, and hidden/unfocused documents. Deferred mobile scroll must respect newer screens, open dialogs, and hidden documents. Broad/private live regions must not queue selected-answer announcements.
 - Translation interpolation substitutes each original placeholder once using a literal callback. User-provided dollar signs, braces, markup-like strings, and translation-token-shaped text remain unchanged.
 
@@ -70,7 +70,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Question is required and limited to 200 characters.
 - 2–10 choices are supported; each choice is required and limited to 80 characters.
 - Duplicate choices are rejected case-insensitively after trimming.
-- Participant count supports 2–100.
+- Participant count supports 2–100. Empty, out-of-range, fractional, and nonnumeric manual entries are rejected instead of silently rounded or clamped. Stepper buttons remain bounded.
 - Every participant starts from a neutral ready screen.
 - Selecting an option does not count the vote until explicit confirmation.
 - “Choose again” returns only the current participant to the choice screen.
@@ -81,7 +81,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Results show counts, percentages, top choices, and ties.
 - Whole-number percentages are allocated deterministically so displayed percentages total 100%.
 - “Copy result” produces plain text containing only the question, aggregate choice counts/percentages, and total votes.
-- “Save result” downloads exactly the same aggregate text as Copy/Share, only for a valid completed and revealed current session. It never exports intermediate or individual votes.
+- “Save result” sits behind an initially collapsed, low-emphasis text-file disclosure and downloads exactly the same aggregate text as Copy/Share, only for a valid completed and revealed current session. It never exports intermediate or individual votes.
 - The result filename defaults to `pass-the-phone-vote-results.txt`, stays editable for the current result, removes unsafe filename characters, and normalizes the final extension to `.txt`. Empty/unsafe names use a valid default.
 - “Share result” is shown only when Web Share API is available and shares the same aggregate-only text.
 - “Vote again with same setup” asks for confirmation and then resets only counts/completed progress while preserving question, choices, and participant count.
@@ -124,7 +124,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 
 ## 7. UX and accessibility
 
-- Smartphone-first responsive layout from 320px upward; desktop remains supported.
+- Smartphone-first responsive layout from 320px upward; desktop remains supported. The introductory hero is shown only during setup and hidden during voting, reveal, and results.
 - Build information is the final item inside the Help dialog’s scrollable body, not part of the main page. Its existing native disclosure, populated values, and bilingual labels remain intact. Keyboard activation of its summary must keep Help open; only clicks targeting the dialog backdrop can dismiss it.
 - The build-information section and page footer remain hidden at the existing smartphone breakpoint (680px and below). At wider widths, build information is available in Help and the footer remains visible.
 - The English translation of 完全ローカル処理 is “Fully local processing” in both the badge and informational footer.
@@ -133,10 +133,10 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling.
 - Result rows collapse to a single-column label/score layout on very narrow screens.
 - The Help dialog separates local processing, temporary `sessionStorage` recovery, and product limitations.
-- Participant stepper controls expose localized accessible names in Japanese and English.
+- Participant stepper controls expose localized accessible names in Japanese and English and use 44px or larger touch targets.
 - Ready, vote, confirmation, handoff, reveal, and result states are visually distinct.
 - The reveal control shows hold progress and also provides a visually subdued non-hold alternative with confirmation.
-- Voting choices and primary actions use large tap targets.
+- Voting choices and primary actions use large tap targets. Paste-list entry is borderless, ballot and confirmation headings have no framed question card, and text-file export begins collapsed.
 - The handoff state is identical regardless of the selected choice.
 - All controls have visible labels or accessible names and visible focus states.
 - Motion respects `prefers-reduced-motion`.

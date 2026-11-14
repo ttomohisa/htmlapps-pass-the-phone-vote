@@ -56,7 +56,7 @@ test('native modal root and body locks are scoped to an open modal', () => {
 });
 
 test('Help omits internal layout and focus audit prose', () => {
-  assert.match(html, /data-i18n="helpModalScroll"/);
+  assert.doesNotMatch(html, /data-i18n="helpModalScroll"/);
   assert.doesNotMatch(html, /ダイアログを開いている間は背景のスクロールが止まります。/);
   assert.doesNotMatch(html, /Background scrolling is paused while a dialog is open\./);
 });
