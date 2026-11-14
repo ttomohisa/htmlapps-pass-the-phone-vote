@@ -25,6 +25,9 @@ async function runCase(browser, file, language, width) {
     assert.equal(await page.locator('.page-intro').isVisible(), true, label + ': setup hero');
     assert.equal(await page.locator('[data-i18n="setupEyebrow"]').count(), 0, label + ': removed setup eyebrow');
     assert.equal(await page.locator('#choiceListDetails').evaluate(el => getComputedStyle(el).borderTopWidth), '0px', label + ': borderless paste list');
+    const presetWidths = await page.locator('.preset-button').evaluateAll(buttons => buttons.map(el => el.getBoundingClientRect().width));
+    assert.ok(Math.max(...presetWidths) - Math.min(...presetWidths) < 1, label + ': equal preset widths');
+    assert.equal(await page.locator('#choiceListDetails summary svg').count(), 1, label + ': clipboard icon');
     if (language === 'ja' && width === 320) {
       const heroLines = await page.locator('#heroTitle').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
       assert.ok(heroLines < 1.2, label + ': Japanese hero has no orphan last character');
@@ -50,6 +53,8 @@ async function runCase(browser, file, language, width) {
     assert.equal(await page.locator('#appConfirmDialog').evaluate(el => el.open), true, label + ': start confirmation');
     await page.locator('#appConfirmOk').click();
     assert.equal(await page.locator('#readyScreen').isVisible(), true, label + ': first ready screen');
+    const readyMessageLines = await page.locator('[data-i18n="readyMessage"]').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
+    assert.ok(readyMessageLines < 1.2, label + ': ready hint stays one line');
     assert.equal(await page.locator('.page-intro').isVisible(), false, label + ': hero hidden after setup');
 
     await page.locator('#beginVoteButton').click();
@@ -88,6 +93,14 @@ async function runCase(browser, file, language, width) {
     assert.equal(await page.locator('#resultScreen').isVisible(), true, label + ': no curtain on results');
     assert.equal(await page.locator('#totalVotesValue').innerText(), '2', label + ': exactly two votes');
     assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), null, label + ': export collapsed');
+    assert.equal(await page.locator('#resultExportDetails summary svg').count(), 1, label + ': file save icon');
+    assert.equal(await page.locator('#resultExportDetails summary span').innerText(), language === 'ja' ? 'テキストで結果を保存' : 'Save result as text');
+    const repeatBox = await page.locator('#repeatVoteButton').boundingBox();
+    const newVoteBox = await page.locator('#newVoteButton').boundingBox();
+    const copyBox = await page.locator('#copyResultButton').boundingBox();
+    assert.ok(repeatBox && newVoteBox && copyBox && Math.abs(repeatBox.y - newVoteBox.y) < 1, label + ': primary actions share a row');
+    assert.ok(copyBox.y >= repeatBox.y + repeatBox.height - 1, label + ': copy utility below primary actions');
+    assert.ok(Math.abs(repeatBox.width - newVoteBox.width) < 1, label + ': primary action widths match');
 
     if (file === 'dist/index.html') {
       const results = path.resolve(__dirname, '..', 'test-results', 'voting-ui');
