@@ -38,6 +38,9 @@ jobs:
     - name: Build and verify standalone HTML
       shell: pwsh
       run: ./scripts/check-repository.ps1
+    - name: Verify release packaging without publishing
+      shell: pwsh
+      run: ./scripts/package-release.ps1
     - name: Verify mobile Help in Chromium
       shell: pwsh
       run: |

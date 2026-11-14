@@ -32,6 +32,12 @@ test('release workflow verifies stable versions, existing releases and assets be
   assert.match(release, /getReleaseByTag/);
   assert.match(release, /sha256sum -c SHA256SUMS\.txt/);
   assert.match(release, /gh release create/);
+  assert.match(release, /scripts\/package-release\.ps1/);
+  const pack = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'package-release.ps1'), 'utf8');
+  assert.match(pack, /Compress-Archive/);
+  assert.match(pack, /SHA256SUMS\.txt/);
+  const prPreview = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'preview.yml'), 'utf8');
+  assert.match(prPreview, /Verify release packaging without publishing/);
   assert.match(release, /\.self-extract\.html/);
   assert.match(release, /--target "\$GITHUB_SHA"/);
   assert.match(release, /contents: write/);

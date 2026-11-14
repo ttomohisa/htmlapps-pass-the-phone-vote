@@ -86,45 +86,7 @@ jobs:
         shell: pwsh
         env:
           RELEASE_VERSION: ${{ needs.inspect.outputs.version }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $prefix = "htmlapps-pass-the-phone-vote-v$env:RELEASE_VERSION"
-          $out = Join-Path $PWD 'release-assets'
-          $bundle = Join-Path $PWD 'release-bundle'
-          New-Item -ItemType Directory -Force -Path $out, $bundle | Out-Null
-
-          Copy-Item -LiteralPath 'dist/index.html' -Destination (Join-Path $out "$prefix.html")
-          Copy-Item -LiteralPath 'dist/index.self-extract.html' -Destination (Join-Path $out "$prefix.self-extract.html")
-
-          $zipFiles = @(
-            @{ Source = 'dist/index.html'; Name = 'index.html' },
-            @{ Source = 'dist/index.self-extract.html'; Name = 'index.self-extract.html' },
-            @{ Source = 'dist/dependency-manifest.json'; Name = 'dependency-manifest.json' },
-            @{ Source = 'dist/self-extract-manifest.json'; Name = 'self-extract-manifest.json' },
-            @{ Source = 'README.md'; Name = 'README.md' },
-            @{ Source = 'README.ja.md'; Name = 'README.ja.md' },
-            @{ Source = 'LICENSE'; Name = 'LICENSE' },
-            @{ Source = 'THIRD_PARTY_NOTICES.md'; Name = 'THIRD_PARTY_NOTICES.md' }
-          )
-          foreach ($entry in $zipFiles) {
-            if (!(Test-Path -LiteralPath $entry.Source -PathType Leaf)) {
-              throw "Release file is missing: $($entry.Source)"
-            }
-            Copy-Item -LiteralPath $entry.Source -Destination (Join-Path $bundle $entry.Name)
-          }
-          $zipPath = Join-Path $out "$prefix.zip"
-          Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zipPath
-
-          $assetNames = @("$prefix.html", "$prefix.self-extract.html", "$prefix.zip")
-          $lines = foreach ($file in $assetNames) {
-            $hash = (Get-FileHash -LiteralPath (Join-Path $out $file) -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $file"
-          }
-          [System.IO.File]::WriteAllText(
-            (Join-Path $out 'SHA256SUMS.txt'),
-            (($lines -join [char]10) + [char]10),
-            [System.Text.UTF8Encoding]::new($false)
-          )
+        run: ./scripts/package-release.ps1 -Version "$env:RELEASE_VERSION"
 
       - name: Upload versioned release assets
         uses: actions/upload-artifact@v7
