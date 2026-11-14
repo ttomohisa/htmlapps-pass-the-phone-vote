@@ -25,6 +25,12 @@ async function runCase(browser, file, language, width) {
     assert.equal(await page.locator('.page-intro').isVisible(), true, label + ': setup hero');
     assert.equal(await page.locator('[data-i18n="setupEyebrow"]').count(), 0, label + ': removed setup eyebrow');
     assert.equal(await page.locator('#choiceListDetails').evaluate(el => getComputedStyle(el).borderTopWidth), '0px', label + ': borderless paste list');
+    if (language === 'ja' && width === 320) {
+      const heroLines = await page.locator('#heroTitle').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
+      assert.ok(heroLines < 1.2, label + ': Japanese hero has no orphan last character');
+      const presetHeight = await page.locator('#presetYesNo').evaluate(el => el.getBoundingClientRect().height);
+      assert.ok(presetHeight <= 48, label + ': Yes/No shortcut stays on one line');
+    }
     if (width <= 390) {
       await page.locator('#helpButton').click();
       const close = await page.locator('#closeHelpButton').boundingBox();
@@ -49,7 +55,7 @@ async function runCase(browser, file, language, width) {
     await page.locator('#beginVoteButton').click();
     assert.equal(await page.locator('#voteScreen').isVisible(), true);
     assert.equal(await page.locator('#voteScreen .question-card').evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
-    assert.equal(await page.locator('#votePrivacy').count(), 0);
+    assert.equal(await page.locator('[data-i18n="votePrivacy"]').count(), 0);
     await page.locator('.vote-option').first().click();
     assert.equal(await page.locator('#confirmVoteScreen').isVisible(), true);
     assert.equal(await page.locator('#confirmVoteScreen .question-card').evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
