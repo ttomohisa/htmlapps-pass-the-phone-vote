@@ -51,10 +51,15 @@ async function runCase(browser, file, language, width) {
       await page.locator('#questionInput').fill('長い質問'.repeat(35));
       await page.locator('.option-input').first().fill('長い選択肢'.repeat(10));
       await page.setViewportSize({ width: 320, height: 568 });
+      // Chromium delivers the resize event asynchronously; wait for textareas to reflow.
+      await page.waitForFunction(() => {
+        const fits = el => el.scrollHeight <= el.clientHeight + 2 || el.clientHeight >= 316;
+        return fits(document.querySelector('#questionInput')) && fits(document.querySelector('.option-input'));
+      }, null, { timeout: 3000 });
       const questionDims = await page.locator('#questionInput').evaluate(el => ({ client: el.clientHeight, scroll: el.scrollHeight }));
       const optionDims = await page.locator('.option-input').first().evaluate(el => ({ client: el.clientHeight, scroll: el.scrollHeight }));
-      assert.ok(questionDims.scroll <= questionDims.client + 2 || questionDims.client >= 316, label + ': resize adjusts question textarea height');
-      assert.ok(optionDims.scroll <= optionDims.client + 2 || optionDims.client >= 316, label + ': resize adjusts choice textarea height');
+      assert.ok(questionDims.scroll <= questionDims.client + 2 || questionDims.client >= 316, label + ': resize adjusts question textarea height ' + JSON.stringify(questionDims));
+      assert.ok(optionDims.scroll <= optionDims.client + 2 || optionDims.client >= 316, label + ': resize adjusts choice textarea height ' + JSON.stringify(optionDims));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': resized setup has no horizontal overflow');
       await page.setViewportSize({ width, height });
     }
