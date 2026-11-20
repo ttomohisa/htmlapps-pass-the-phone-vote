@@ -60,10 +60,10 @@ No runtime third-party library is required by the app itself.
 2. Enter a question, 2–10 choices, and an integer participant count from 2–100. Invalid manual counts are rejected rather than silently corrected.
 3. Press **Start voting** and review the setup before beginning.
 4. Hand the phone to the first participant. They press **Vote now**, choose one option, and confirm it.
-5. After confirmation, the selected answer is cleared and a neutral handoff screen appears. Pass the phone to the next person.
+5. After confirmation, the answer disappears. Pass the phone to the next person, who taps **Person 2: vote now** (or their number) to open their own ballot in one step.
 6. Repeat until everyone has voted.
 7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
-8. Copy or share the aggregate result. To download a `.txt` file, expand **Save result as text**, edit the filename, and press **Save result**. You can also repeat the vote or create a new vote.
+8. Copy or share the aggregate result. To download a `.txt` file, expand **Save result as text**, edit the filename, and press **Save result**. **Vote again** reuses the setup; **Change setup** returns to the editable question and choices.
 
 ### Vote setup
 
@@ -75,13 +75,13 @@ No runtime third-party library is required by the app itself.
 - Duplicate or blank choices are rejected before voting starts.
 - Deleting a choice or replacing choices offers **Undo**. It is available only until a newer setup edit or vote start, so it cannot replace newer work.
 - Removing a choice moves keyboard focus to the next remaining choice, or the previous choice when removing the last row.
-- Enter advances through fields; confirming Japanese or other IME composition leaves focus and choice count unchanged.
+- Question and choice fields expand vertically to show long text (up to 200 and 80 characters, respectively), including when the screen size changes. Pasted line breaks are converted to spaces; use **Paste a list** to enter multiple choices at once. Enter advances through fields; confirming Japanese or other IME composition leaves focus and choice count unchanged.
 
 ### Result actions
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
 
-Expand **Save result as text** and edit the filename beside **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. Edit the filename before saving; unsafe filename characters are removed and the `.txt` extension is normalized. The default is `pass-the-phone-vote-results.txt`. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
+Expand **Save result as text** and edit the filename beside **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. The default is `vote-results` in English or `投票結果` in Japanese; `.txt` is shown separately and added at download. Unsafe filename characters are removed. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
 
 A reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 

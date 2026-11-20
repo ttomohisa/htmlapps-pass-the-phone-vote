@@ -4,7 +4,7 @@
 
 - **Name:** Pass-the-Phone Vote
 - **Japanese name:** スマホ回し投票
-- **Version:** 1.0.4
+- **Version:** 1.0.5
 - **One-sentence purpose:** One phone is passed around for a private in-person vote, and only the final aggregate result is revealed after everyone has voted.
 - **Primary users:** Families, friends, small teams, classrooms, workshops, and other co-located small groups.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`
@@ -52,18 +52,18 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 
 
 1. Enter a question, 2–10 choices, and participant count.
-2. Start voting and show a neutral “Person N” ready screen before every participant.
+2. Start voting and show a neutral Person 1 ready screen. Later participants open their own ballots directly from the neutral handoff screen; recovery still uses a neutral ready screen.
 3. The current participant presses the vote button and chooses one option.
 4. Show that participant an explicit confirmation screen before the vote is counted.
 5. On confirmation, increment only the selected option count, clear the pending choice and private answer DOM, then show a neutral handoff screen.
-6. Pass the phone to the next participant and repeat.
+6. Pass the phone; the next participant taps their numbered handoff button once to open the ballot.
 7. Browser Back must never restore a previous participant's answer or confirmation screen.
 8. After the configured number of votes, show a dedicated reveal screen.
 9. Reveal requires a 1.2-second hold gesture with visible progress, or an accessible confirmation-based alternative.
 10. After reveal, show only aggregate results.
 11. The revealed result can be copied, saved as a UTF-8 `.txt` file with an editable filename, and shared through Web Share API when available.
 12. “Vote again with same setup” requires confirmation, resets aggregate counts only, and restarts from Person 1 with the same setup.
-13. “Create a new vote” remains a separate confirmed action that returns to editable setup.
+13. “Change setup” remains a separate confirmed action that returns to editable setup while preserving question, choices, and participant count.
 
 ## 4. Functional requirements
 
@@ -81,14 +81,14 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Results show counts, percentages, top choices, and ties.
 - Whole-number percentages are allocated deterministically so displayed percentages total 100%.
 - “Copy result” produces plain text containing only the question, aggregate choice counts/percentages, and total votes.
-- The editable result filename and “Save result” button appear side by side only after expanding an initially collapsed “Save result as text” disclosure after reveal. Save downloads exactly the same aggregate text as Copy/Share only for a valid completed and revealed current session; it never exports intermediate or individual votes.
-- The result filename defaults to `pass-the-phone-vote-results.txt`, stays editable for the current result, removes unsafe filename characters, and normalizes the final extension to `.txt`. Empty/unsafe names use a valid default.
+- The editable filename base, non-editable `.txt` suffix, and “Save result” button appear side by side only after expanding an initially collapsed “Save result as text” disclosure after reveal. Copy/Share sit immediately below, with a separate divider before Vote again / Change setup. Save downloads exactly the same aggregate text as Copy/Share only for a valid completed and revealed current session; it never exports intermediate or individual votes.
+- The result filename defaults to `vote-results` in English or `投票結果` in Japanese in the editable input, with a fixed visible `.txt` suffix. Unsafe filename characters are removed and `.txt` is normalized at download. Empty/unsafe names use the localized fallback. Language switching changes only an untouched default; edited names remain unchanged.
 - “Share result” is shown only when Web Share API is available and shares the same aggregate-only text.
 - “Vote again with same setup” asks for confirmation and then resets only counts/completed progress while preserving question, choices, and participant count.
 - A short tap on the main reveal control must not reveal the result.
 - Holding the main reveal control continuously for 1.2 seconds reveals the result with visible progress. Releasing the initiating key/pointer, losing focus, hiding the page, opening a modal, navigating, or changing vote state cancels the gesture. Stale animation callbacks cannot reveal a result or complete a newer gesture.
 - An alternative reveal action opens a confirmation dialog for users who cannot perform a hold gesture.
-- “Create a new vote” from the result screen must ask for confirmation before leaving the current result.
+- “Change setup” from the result screen must ask for confirmation before leaving the current result; prior counts are discarded and existing question, choices, and participant count return for editing.
 - Repeated taps/clicks on vote confirmation, handoff, and reveal controls must not duplicate state transitions.
 - Critical actions must verify that they are running from the expected screen and that aggregate counts are internally consistent.
 - An in-progress vote must provide a low-emphasis “Stop this vote” action that requires destructive confirmation before aggregate counts are discarded.
@@ -130,14 +130,14 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - The English translation of 完全ローカル処理 is “Fully local processing” in both the badge and informational footer.
 - Mobile primary actions use at least 48px height, while secondary touch targets are at least 44px even when visually subdued.
 - Header/help/confirmation controls respect mobile safe areas and remain reachable on short-height screens.
-- Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling.
+- The question (up to 200 characters) and option inputs (up to 80 characters) use auto-growing, wrapped textareas with a bounded maximum height. Input heights are recalculated on viewport resizing. Pasted line breaks become spaces outside IME composition, preserving one logical label per field; multiple choices belong in Paste a list. Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling. Enter still advances and IME confirmation does not.
 - Result rows collapse to a single-column label/score layout on very narrow screens.
 - The Help dialog separates local processing, temporary `sessionStorage` recovery, and product limitations.
 - Participant stepper controls expose localized accessible names in Japanese and English and use 44px or larger touch targets.
 - Ready, vote, confirmation, handoff, reveal, and result states are visually distinct. Start confirmation groups the untrusted question text, participant count, choices, and immutable-after-start warning without interpreting them as HTML. The core layout uses an 8px spacing rhythm with mobile-safe controls.
 - The reveal control shows hold progress and also provides a visually subdued non-hold alternative with confirmation. The abort shortcut is omitted from the reveal screen only; earlier active voting screens still allow confirmed cancellation.
 - Voting choices and primary actions use large tap targets. Paste-list entry remains borderless; the setup intro and preset helper are not shown. Choice rows show an input and a visually quiet, accessible remove button without decorative numbering. The question, choice, and participant limits are beside their labels. The optional export filename and Save button appear in one row only when the text-export disclosure is expanded.
-- The handoff state is identical regardless of the selected choice.
+- The handoff state is identical regardless of the selected choice. Person 1 and unfinished-vote recovery retain the neutral ready screen, while subsequent participants move directly from handoff to a clean ballot with one deliberate tap.
 - All controls have visible labels or accessible names and visible focus states.
 - Motion respects `prefers-reduced-motion`.
 - Help remains scrollable on narrow/short smartphone screens.
@@ -194,7 +194,7 @@ Current stable desktop and mobile Chromium, Firefox, and Safari. Direct `file://
 - Discarding recovery attempts to remove the `sessionStorage` snapshot and returns to setup; if removal fails, the app clearly warns that the old snapshot may reappear.
 - Restoring a completed vote returns to the reveal screen or result screen according to the saved safe phase.
 - Double-clicking or rapidly tapping “Confirm vote” increments the completed count and exactly one option count only once.
-- Rapidly tapping “Next person” cannot skip a participant.
+- Rapidly tapping the numbered next-person button cannot skip a participant or count a vote; one valid tap moves directly from handoff to the next ballot.
 - Repeated reveal events cannot render or save the result more than once.
 - “Stop this vote” requires confirmation; cancel keeps the active vote unchanged, while confirm clears the recovery snapshot and aggregate counts.
 - A live state with mismatched aggregate counts fails closed instead of continuing or revealing a result.
