@@ -130,7 +130,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - The English translation of 完全ローカル処理 is “Fully local processing” in both the badge and informational footer.
 - Mobile primary actions use at least 48px height, while secondary touch targets are at least 44px even when visually subdued.
 - Header/help/confirmation controls respect mobile safe areas and remain reachable on short-height screens.
-- The question (up to 200 characters) and option inputs (up to 80 characters) use auto-growing, wrapped textareas with a bounded maximum height. Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling. Enter still advances and IME confirmation does not.
+- The question (up to 200 characters) and option inputs (up to 80 characters) use auto-growing, wrapped textareas with a bounded maximum height. Input heights are recalculated on viewport resizing. Pasted line breaks become spaces outside IME composition, preserving one logical label per field; multiple choices belong in Paste a list. Long questions, option labels, result labels, scores, and English action labels wrap without horizontal scrolling. Enter still advances and IME confirmation does not.
 - Result rows collapse to a single-column label/score layout on very narrow screens.
 - The Help dialog separates local processing, temporary `sessionStorage` recovery, and product limitations.
 - Participant stepper controls expose localized accessible names in Japanese and English and use 44px or larger touch targets.
