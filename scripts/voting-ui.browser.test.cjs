@@ -126,6 +126,11 @@ async function runCase(browser, file, language, width) {
     assert.equal(await page.locator('#resultExportDetails summary').isVisible(), true, label + ': optional export disclosure visible');
     assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), null, label + ': export initially collapsed');
     assert.equal(await page.locator('#saveResultButton').isVisible(), false, label + ': save controls hidden by default');
+    await page.locator('#resultExportDetails summary').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), '', label + ': keyboard Enter opens export');
+    await page.keyboard.press('Space');
+    assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), null, label + ': keyboard Space closes export');
     await page.locator('#resultExportDetails summary').click();
     assert.equal(await page.locator('#saveResultButton').isVisible(), true, label + ': save controls visible after expanding');
     assert.equal(await page.locator('#outputFilename').inputValue(), language === 'ja' ? '投票結果' : 'vote-results');
