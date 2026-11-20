@@ -63,7 +63,7 @@ No runtime third-party library is required by the app itself.
 5. After confirmation, the answer disappears. Pass the phone to the next person, who taps **Person 2: vote now** (or their number) to open their own ballot in one step.
 6. Repeat until everyone has voted.
 7. Hold **Hold to reveal** to display the result. If holding is difficult, use the alternative reveal action and confirm it.
-8. Copy or share the aggregate result. To download a `.txt` file, edit the filename in the result screen and press **Save result** beside it. **Vote again** reuses the setup; **Change setup** returns to the editable question and choices.
+8. Copy or share the aggregate result. To download a `.txt` file, expand **Save result as text**, edit the filename, and press **Save result**. **Vote again** reuses the setup; **Change setup** returns to the editable question and choices.
 
 ### Vote setup
 
@@ -81,7 +81,7 @@ No runtime third-party library is required by the app itself.
 
 Results contain the question, each choice's vote count and whole-number percentage, and the total number of votes. Percentages are adjusted deterministically so the displayed whole numbers total 100%.
 
-Enter the filename beside **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. The default is `vote-results` in English or `投票結果` in Japanese; `.txt` is shown separately and added at download. Unsafe filename characters are removed. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
+Expand **Save result as text** and edit the filename beside **Save result** to download the same plain text as **Copy result**, including Japanese and other Unicode text. The default is `vote-results` in English or `投票結果` in Japanese; `.txt` is shown separately and added at download. Unsafe filename characters are removed. Saving becomes available only after the result is revealed. The download stays under your control and is not uploaded by the app.
 
 A reveal hold must remain uninterrupted for 1.2 seconds. Releasing, switching focus/window/tab, opening a dialog, or navigating cancels it.
 
