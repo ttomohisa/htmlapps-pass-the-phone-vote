@@ -6,6 +6,7 @@
 - Replace question/choice single-line inputs with bounded auto-growing textareas while retaining Enter/IME navigation and character limits.
 - Display localized short result filenames without the editable `.txt` extension, group the optional Save disclosure and Copy/Share above a separate repeat/change setup row, and rename New vote / 新しい投票 to Change setup / 内容を変えて投票.
 - Consolidate duplicate CSS declarations and remove obsolete option-number/result-action selectors, retaining the mobile 8px spacing rhythm.
+- Pre-release audit: reflow textareas on device rotation, normalize pasted line breaks without interrupting IME, improve the 320px Japanese result-button wrapping, and add long-label/short-dialog/keyboard export regression checks.
 
 ## 1.0.4
 
