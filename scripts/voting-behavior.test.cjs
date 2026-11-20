@@ -14,7 +14,7 @@ function setup(app, choices = ['Rice', 'Pasta', 'Salad'], participants = 2) {
   app.input(app.el('participantCount'), String(participants));
 }
 async function start(app, choices, participants) { setup(app, choices, participants); app.el('startVoteButton').click(); app.el('appConfirmOk').click(); await app.settle(); assert.equal(app.screen(), 'readyScreen'); }
-function vote(app, index = 0) { if (app.screen() === 'handoffScreen') app.el('nextVoterButton').click(); app.el('beginVoteButton').click(); app.el('voteOptions').children[index].click(); app.el('confirmVoteButton').click(); }
+function vote(app, index = 0) { if (app.screen() === 'handoffScreen') app.el('nextVoterButton').click(); else if (app.screen() === 'readyScreen') app.el('beginVoteButton').click(); assert.equal(app.screen(), 'voteScreen'); app.el('voteOptions').children[index].click(); app.el('confirmVoteButton').click(); }
 async function completed(app) { await start(app); vote(app, 0); vote(app, 1); assert.equal(app.screen(), 'revealScreen'); }
 function hold(app, extra = {}) { app.el('revealButton').focus(); return app.el('revealButton').dispatch('keydown', { key: ' ', ...extra }); }
 function hidden(app) { assert.equal(app.screen(), 'revealScreen'); assert.equal(app.el('resultList').children.length, 0); }
@@ -60,7 +60,7 @@ test('discard handles failed removal by invalidating the old recovery payload', 
 test('failed discard of unreadable data does not falsely say it was cleared', () => { const app = createApp(filename, { storage: [[key, '{bad']] }); assert.equal(app.storage.has(key), false); const later = createApp(filename); later.storage.set(key, '{bad'); later.controls.failRemove = true; later.controls.failWrite = true; later.run('initializeSessionRecovery()'); assert.equal(warning(later)?.hidden, false); assert.doesNotMatch(later.el('appToastMessage').textContent, /was discarded|cleared/); });
 
 test('only revealed completed result can save aggregate UTF-8 text with edited filename', async () => { const app = createApp(filename); assert.ok(app.el('saveResultButton'), 'Save result button exists'); await start(app, ['"Rice" 🍚', "Pasta's Ω", 'ゼロ'], 2); app.el('saveResultButton').click(); assert.equal(app.downloads.length, 0); vote(app, 0); vote(app, 1); app.el('saveResultButton').click(); assert.equal(app.downloads.length, 0); hold(app); app.frame(1200); app.input(app.el('outputFilename'), '会議/"結果":?*\\.TXT'); app.el('saveResultButton').click(); assert.equal(app.downloads.length, 1); const saved = app.downloads[0]; assert.equal(saved.name, '会議結果.txt'); assert.equal(await saved.blob.text(), 'Dinner "投票" 🍚\n\n"Rice" 🍚: 1 vote (50%)\nPasta\'s Ω: 1 vote (50%)\nゼロ: 0 votes (0%)\n\nTotal votes: 2'); assert.equal(saved.blob.type, 'text/plain;charset=utf-8'); app.el('copyResultButton').click(); await app.settle(); assert.equal(app.globals.clipboard, await saved.blob.text()); app.flushTimers(); assert.ok(app.revoked.includes(saved.href)); });
-for (const [value, expected] of [['../\\:*?"<>|\u0001', 'pass-the-phone-vote-results.txt'], ['CON', 'pass-the-phone-vote-results.txt'], ['report.txt.txt', 'report.txt'], ['  votes.TXT.  ', 'votes.txt'], ['会議 結果.txt', '会議 結果.txt']]) test(`safe filename ${JSON.stringify(value)}`, async () => { const app = createApp(filename); await completed(app); hold(app); app.frame(1200); assert.ok(app.el('outputFilename')); app.input(app.el('outputFilename'), value); app.el('saveResultButton').click(); assert.equal(app.downloads[0].name, expected); });
+for (const [value, expected] of [['../\\:*?"<>|\u0001', 'vote-results.txt'], ['CON', 'vote-results.txt'], ['report.txt.txt', 'report.txt'], ['  votes.TXT.  ', 'votes.txt'], ['会議 結果.txt', '会議 結果.txt']]) test(`safe filename ${JSON.stringify(value)}`, async () => { const app = createApp(filename); await completed(app); hold(app); app.frame(1200); assert.ok(app.el('outputFilename')); app.input(app.el('outputFilename'), value); app.el('saveResultButton').click(); assert.equal(app.downloads[0].name, expected); });
 test('language refresh preserves edited export name and localizes export', async () => { const app = createApp(filename); await completed(app); hold(app); app.frame(1200); app.input(app.el('outputFilename'), '自分の名前.txt'); app.el('languageButton').click(); assert.equal(app.el('outputFilename').value, '自分の名前.txt'); app.el('saveResultButton').click(); assert.match(await app.downloads[0].blob.text(), /合計票数: 2/); });
 
 test('recovery returns unconfirmed ballot to ready and revealed result to result', async () => { const app = createApp(filename); await start(app); app.el('beginVoteButton').click(); app.el('voteOptions').children[0].click(); app.window.dispatch('pagehide'); const reloaded = createApp(filename, { storage: app.storage }); reloaded.el('sessionRecoveryContinue').click(); assert.equal(reloaded.screen(), 'readyScreen'); assert.equal(reloaded.el('confirmChoice').textContent, ''); assert.equal(state(reloaded).completed, 0); vote(reloaded); vote(reloaded); hold(reloaded); reloaded.frame(1200); const result = createApp(filename, { storage: reloaded.storage }); result.el('sessionRecoveryContinue').click(); assert.equal(result.screen(), 'resultScreen'); assert.equal(state(result).completed, 2); result.el('saveResultButton')?.click(); assert.equal(result.downloads.length, 1); });
@@ -70,7 +70,7 @@ test('stale start confirmation cannot overwrite an edited setup', async () => { 
 for (const action of ['repeatVoteButton', 'newVoteButton', 'alternateRevealButton', 'abort']) test(`stale ${action} confirmation cannot change a restored session`, async () => { const app = createApp(filename); await completed(app); if (action !== 'alternateRevealButton' && action !== 'abort') { app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); } if (action === 'abort') app.document.querySelector('.abort-vote-button').click(); else app.el(action).click(); const restored = { phase: action === 'alternateRevealButton' || action === 'abort' ? 'reveal' : 'result', state: { question: 'New source', options: [{ label: 'A', votes: 0 }, { label: 'B', votes: 2 }], participants: 2, completed: 2 } }; app.run('restoreVoteSession(' + JSON.stringify(restored) + ')'); app.el('appConfirmOk').click(); await app.settle(); assert.deepEqual(state(app), restored.state); assert.equal(app.screen(), restored.phase + 'Screen'); });
 test('old setup Undo cannot overwrite restored data after returning to setup', () => { const app = createApp(filename); setup(app); app.document.querySelectorAll('.remove-option')[1].click(); app.run('restoreVoteSession({phase:"ready",state:{question:"Restored",options:[{label:"A",votes:0},{label:"B",votes:0}],participants:2,completed:0}})'); app.run('returnToSetupFromCurrentState()'); app.el('appToastAction').click(); assert.deepEqual(app.inputs().map(el => el.value), ['A', 'B']); assert.equal(app.el('questionInput').value, 'Restored'); });
 test('closed confirm dialog autofocus cannot steal current workflow focus', async () => { const app = createApp(filename); await start(app); app.el('beginVoteButton').focus(); app.frame(50); assert.ok(app.document.activeElement === app.el('beginVoteButton'), 'focus remains on current workflow'); });
-test('filename with extension only falls back and long Unicode remains byte-bounded', async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); app.frame(1300); for (const value of ['.txt', '.TXT.txt', '. ', '']) { app.input(app.el('outputFilename'), value); app.el('saveResultButton').click(); assert.equal(app.downloads.at(-1).name, 'pass-the-phone-vote-results.txt'); } app.input(app.el('outputFilename'), '結果🐈'.repeat(100)); app.el('saveResultButton').click(); const name = app.downloads.at(-1).name; assert.ok(Buffer.byteLength(name, 'utf8') <= 200); assert.ok(!name.includes('\uFFFD')); assert.match(name, /\.txt$/); });
+test('filename with extension only falls back and long Unicode remains byte-bounded', async () => { const app = createApp(filename); await completed(app); app.frame(100); hold(app); app.frame(1300); for (const value of ['.txt', '.TXT.txt', '. ', '']) { app.input(app.el('outputFilename'), value); app.el('saveResultButton').click(); assert.equal(app.downloads.at(-1).name, 'vote-results.txt'); } app.input(app.el('outputFilename'), '結果🐈'.repeat(100)); app.el('saveResultButton').click(); const name = app.downloads.at(-1).name; assert.ok(Buffer.byteLength(name, 'utf8') <= 200); assert.ok(!name.includes('\uFFFD')); assert.match(name, /\.txt$/); });
 for (const phase of ['reveal', 'result', 'repeat']) test(`save failure at ${phase} retains live counts and removes stale recovery`, async () => { const app = createApp(filename); await start(app); vote(app); if (phase === 'reveal') app.controls.failWrite = true; vote(app); if (phase === 'result') app.controls.failWrite = true; app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle(); if (phase === 'repeat') { app.controls.failWrite = true; app.el('repeatVoteButton').click(); app.el('appConfirmOk').click(); await app.settle(); } assert.equal(state(app).completed, phase === 'repeat' ? 0 : 2); assert.equal(app.storage.has(key), false); assert.equal(warning(app).hidden, false); });
 test('recovery prompt warns saved progress might be older after total storage failure', async () => { const app = createApp(filename); await start(app); app.controls.failWrite = true; app.controls.failRemove = true; vote(app); const reload = createApp(filename, { storage: app.storage }); assert.match(reload.el('sessionRecoveryMessage').textContent, /older/); assert.equal(reload.screen(), 'setupScreen'); assert.equal(reload.el('sessionRecoveryDialog').open, true); });
 test('a successful invalidation downgrades the stale warning without hiding recovery failure', async () => { const app = createApp(filename); await start(app); app.controls.failWrite = true; app.controls.failRemove = true; vote(app); app.controls.failRemove = false; app.run('clearVoteSession()'); assert.equal(app.storage.has(key), false); assert.equal(warning(app).hidden, false); assert.doesNotMatch(warning(app).textContent, /older/); });
@@ -320,7 +320,7 @@ test('an interrupted reveal hold stays hidden and the confirmation alternative r
 });
 test('Back while paused discards only the unfinished answer and keeps the curtain', async () => {
   const app = createApp(filename); await start(app); vote(app); app.el('nextVoterButton').click();
-  app.el('beginVoteButton').click(); app.el('voteOptions').children[1].click(); app.window.dispatch('blur');
+  app.el('voteOptions').children[1].click(); app.window.dispatch('blur');
   app.window.dispatch('popstate'); assert.equal(app.screen(), 'privacyScreen'); assert.equal(app.run('pendingChoiceIndex'), null);
   app.el('privacyResumeButton').click(); assert.equal(app.screen(), 'readyScreen'); assert.equal(state(app).completed, 1);
 });
@@ -354,7 +354,7 @@ test('new screens focus non-action headings without hijacking newer input or dia
   app.el('confirmVoteButton').click(); app.frame(40); assert.equal(app.document.activeElement, app.el('handoffTitle'));
   app.el('nextVoterButton').click(); app.el('helpButton').click(); app.el('closeHelpButton').focus(); app.frame(50);
   assert.equal(app.document.activeElement, app.el('closeHelpButton')); app.el('closeHelpButton').click();
-  app.el('beginVoteButton').click(); app.el('voteOptions').children[1].focus(); app.frame(60);
+  app.el('voteOptions').children[1].focus(); app.frame(60);
   assert.equal(app.document.activeElement, app.el('voteOptions').children[1]);
 });
 test('stale screen focus cannot reach a curtain or newer session', async () => {
@@ -416,6 +416,60 @@ test('hero is setup-only, list is minimal, and result save is directly accessibl
   assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
 });
 
+
+test('handoff opens the next ballot with one tap, without a second ready action', async () => {
+  for (const language of ['ja', 'en']) {
+    const app = createApp(filename, { language });
+    await start(app); vote(app, 0);
+    assert.equal(app.screen(), 'handoffScreen');
+    assert.equal(app.el('nextVoterButton').textContent, language === 'ja' ? '2人目が投票する' : 'Person 2: vote now');
+    assert.equal(app.el('confirmChoice').textContent, '');
+    app.el('nextVoterButton').click(); assert.equal(app.screen(), 'voteScreen');
+    assert.equal(app.el('voteOptions').children.length, 3);
+    assert.equal(state(app).completed, 1, 'new ballot is not counted yet');
+    app.el('nextVoterButton').click(); assert.equal(app.screen(), 'voteScreen', 'extra tap is ignored');
+    const reload = createApp(filename, { language, storage: app.storage });
+    reload.el('sessionRecoveryContinue').click();
+    assert.equal(reload.screen(), 'readyScreen', 'unfinished ballot is masked on reload');
+    assert.equal(state(reload).completed, 1);
+  }
+});
+
+test('long question and choices use wrapping textareas and preserve Enter focus', () => {
+  const app = createApp(filename);
+  assert.equal(app.el('questionInput').tagName, 'TEXTAREA');
+  assert.equal(app.el('questionInput').getAttribute('maxlength'), '200');
+  assert.ok(app.inputs().every(el => el.tagName === 'TEXTAREA' && el.maxLength === 80));
+  setup(app, ['長い選択肢'.repeat(8), '別の長い選択肢'.repeat(5)]);
+  assert.equal(app.inputs()[0].value, '長い選択肢'.repeat(8));
+  app.el('questionInput').dispatch('keydown', { key: 'Enter' });
+  assert.equal(app.document.activeElement, app.inputs()[0]);
+});
+
+test('localized filename base has a fixed suffix and keeps edits across language changes', async () => {
+  for (const [language, base, download] of [['en','vote-results','vote-results.txt'], ['ja','投票結果','投票結果.txt']]) {
+    const app = createApp(filename, { language });
+    assert.equal(app.el('outputFilename').value, base);
+    assert.equal(app.document.querySelector('.filename-extension').textContent, '.txt');
+    await completed(app); hold(app); app.frame(1200);
+    app.el('saveResultButton').click(); assert.equal(app.downloads[0].name, download);
+    assert.equal(app.el('outputFilename').value, base, 'extension is not repeated in editable input');
+    app.input(app.el('outputFilename'), 'my custom');
+    app.el('languageButton').click(); assert.equal(app.el('outputFilename').value, 'my custom');
+  }
+});
+
+test('result actions separate preservation from replacing the vote', async () => {
+  const app = createApp(filename, { language:'ja' }); await completed(app); hold(app); app.frame(1200);
+  const copy = app.el('copyResultButton'), repeat = app.el('repeatVoteButton'), change = app.el('newVoteButton');
+  assert.ok(copy.closest('.result-share-actions'));
+  assert.ok(repeat.closest('.result-repeat-actions'));
+  assert.ok(change.closest('.result-repeat-actions'));
+  assert.equal(change.textContent, '内容を変えて投票');
+  change.click(); assert.equal(app.el('appConfirmTitle').textContent, '投票内容を変更しますか？');
+  app.el('appConfirmCancel').click(); await app.settle();
+  assert.equal(app.screen(), 'resultScreen');
+});
 
 // UI refinements must not change the vote data or compromise the start confirmation.
 
