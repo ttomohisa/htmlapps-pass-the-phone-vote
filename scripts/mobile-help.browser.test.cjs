@@ -35,7 +35,7 @@ async function main() {
             }), label + ': badge text fits');
             assert.equal(await page.locator('main .build-section').count(), 0, label);
             assert.equal(await page.locator('footer').isVisible(), width > 680, label);
-            if (language === 'en') assert.match(await page.locator('footer').textContent(), /Fully local processing · Single HTML/);
+            if (language === 'en') { const footer = await page.locator('footer').textContent(); assert.match(footer, /Fully local processing/); assert.doesNotMatch(footer, /Single HTML/); }
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': page width');
 
             await page.locator('#helpButton').click();

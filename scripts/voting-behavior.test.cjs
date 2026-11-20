@@ -285,7 +285,7 @@ for (const target of ['readyScreen', 'voteScreen', 'handoffScreen', 'revealScree
     if (target === 'revealScreen' || target === 'resultScreen') {
       assert.equal(app.screen(), target, 'reveal and result screens stay visible');
       assert.deepEqual(state(app), before);
-      assert.equal(app.el('resultExportDetails').open, false, 'export begins collapsed');
+      assert.ok(app.el('outputFilename'), 'filename input is available beside Save result');
     } else {
       assert.equal(app.screen(), 'privacyScreen');
       app.el('saveResultButton').click(); app.el('nextVoterButton').click(); app.el('beginVoteButton').click();
@@ -400,7 +400,7 @@ test('manual participant counts are validated rather than silently coerced', asy
   app.el('appConfirmOk').click(); await app.settle();
   assert.equal(state(app).participants, 3);
 });
-test('hero is setup-only, list is minimal, and result save begins collapsed', async () => {
+test('hero is setup-only, list is minimal, and result save is directly accessible', async () => {
   const app = createApp(filename);
   assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
   assert.ok(app.el('choiceListDetails').querySelector('summary svg'));
@@ -410,10 +410,51 @@ test('hero is setup-only, list is minimal, and result save begins collapsed', as
   await completed(app);
   assert.equal(app.document.body.classList.contains('vote-in-progress'), true);
   app.el('alternateRevealButton').click(); app.el('appConfirmOk').click(); await app.settle();
-  assert.equal(app.el('resultExportDetails').open, false);
+  assert.ok(app.el('resultExportDetails').querySelector('.result-export-row'));
   assert.equal(app.el('saveResultButton').disabled, false);
   app.el('newVoteButton').click(); app.el('appConfirmOk').click(); await app.settle();
   assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
+});
+
+
+test('result text export is collapsed initially and resets on result entry', async () => {
+  const app = createApp(filename);
+  assert.equal(app.el('resultExportDetails').open, false);
+  assert.ok(app.el('resultExportDetails').querySelector('summary'));
+  await completed(app);
+  app.el('alternateRevealButton').click();
+  app.el('appConfirmOk').click();
+  await app.settle();
+  assert.equal(app.screen(), 'resultScreen');
+  assert.equal(app.el('resultExportDetails').open, false, 'reveal never opens optional save controls');
+  app.el('resultExportDetails').open = true;
+  assert.equal(app.el('resultExportDetails').open, true);
+  app.run("showScreen('resultScreen')");
+  assert.equal(app.el('resultExportDetails').open, false);
+});
+
+// UI refinements must not change the vote data or compromise the start confirmation.
+
+test('start confirmation shows escaped structured question, participant count, and choices', async () => {
+  const app = createApp(filename);
+  setup(app, ['<img src=x onerror=alert(1)>', '二択']);
+  app.el('startVoteButton').click();
+  const message = app.el('appConfirmMessage');
+  assert.ok(message.querySelector('.start-preview-question'));
+  assert.equal(message.querySelector('.start-preview-question').textContent, 'Dinner "投票" 🍚');
+  assert.equal(message.querySelector('.start-preview-list').children[0].textContent, '<img src=x onerror=alert(1)>');
+  assert.ok(message.textContent.includes('Participants: 2'));
+  assert.equal(message.querySelector('img'), null, 'user-provided labels are text, not markup');
+  app.el('appConfirmCancel').click();
+  await app.settle();
+  assert.equal(app.screen(), 'setupScreen');
+});
+
+test('setup options show only inputs and accessible removal controls', () => {
+  const app = createApp(filename);
+  assert.equal(app.document.querySelectorAll('.option-number').length, 0);
+  assert.equal(app.document.querySelectorAll('.option-row').length, 3);
+  assert.equal(app.document.querySelectorAll('.remove-option').length, 3);
 });
 
 (async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();
