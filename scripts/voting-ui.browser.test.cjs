@@ -37,6 +37,15 @@ async function runCase(browser, file, language, width) {
     const presetWidths = await page.locator('.preset-button').evaluateAll(buttons => buttons.map(el => el.getBoundingClientRect().width));
     assert.ok(Math.max(...presetWidths) - Math.min(...presetWidths) < 1, label + ': equal preset widths');
     assert.equal(await page.locator('#choiceListDetails summary svg').count(), 1, label + ': clipboard icon');
+    assert.equal(await page.locator('#questionInput').evaluate(el => el.tagName), 'TEXTAREA');
+    assert.equal(await page.locator('.option-input').first().evaluate(el => el.tagName), 'TEXTAREA');
+    if (language === 'ja' && width === 320 && file === 'dist/index.html') {
+      await page.locator('#questionInput').fill('長い質問'.repeat(35));
+      await page.locator('.option-input').first().fill('長い選択肢'.repeat(10));
+      assert.ok(await page.locator('#questionInput').evaluate(el => el.clientHeight >= 72));
+      assert.ok(await page.locator('.option-input').first().evaluate(el => el.scrollHeight <= el.clientHeight + 2));
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': long input fits');
+    }
     if (language === 'ja' && width === 320) {
       const heroLines = await page.locator('#heroTitle').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
       assert.ok(heroLines < 1.2, label + ': Japanese hero has no orphan last character');
@@ -76,8 +85,9 @@ async function runCase(browser, file, language, width) {
     await page.locator('#confirmVoteButton').click();
     assert.equal(await page.locator('#handoffScreen').isVisible(), true);
 
+    assert.equal(await page.locator('#nextVoterButton').innerText(), language === 'ja' ? '2人目が投票する' : 'Person 2: vote now');
     await page.locator('#nextVoterButton').click();
-    await page.locator('#beginVoteButton').click();
+    assert.equal(await page.locator('#voteScreen').isVisible(), true, label + ': one-tap handoff opens ballot');
     await page.evaluate(() => window.dispatchEvent(new Event('blur')));
     assert.equal(await page.locator('#privacyScreen').isVisible(), true, label + ': curtain during voting');
     await page.locator('#privacyResumeButton').click();
@@ -102,6 +112,8 @@ async function runCase(browser, file, language, width) {
     assert.equal(await page.locator('#resultScreen').isVisible(), true, label + ': no curtain on results');
     assert.equal(await page.locator('#totalVotesValue').innerText(), '2', label + ': exactly two votes');
     assert.equal(await page.locator('#resultExportDetails').isVisible(), true, label + ': save controls always available');
+    assert.equal(await page.locator('#outputFilename').inputValue(), language === 'ja' ? '投票結果' : 'vote-results');
+    assert.equal(await page.locator('.filename-extension').innerText(), '.txt');
     assert.equal(await page.locator('#saveResultButton svg').count(), 1, label + ': save icon');
     assert.equal(await page.locator('#saveResultButton span').innerText(), language === 'ja' ? '結果を保存' : 'Save result');
     const filenameBox = await page.locator('#outputFilename').boundingBox();
@@ -111,7 +123,7 @@ async function runCase(browser, file, language, width) {
     const newVoteBox = await page.locator('#newVoteButton').boundingBox();
     const copyBox = await page.locator('#copyResultButton').boundingBox();
     assert.ok(repeatBox && newVoteBox && copyBox && Math.abs(repeatBox.y - newVoteBox.y) < 1, label + ': primary actions share a row');
-    assert.ok(copyBox.y >= repeatBox.y + repeatBox.height - 1, label + ': copy utility below primary actions');
+    assert.ok(copyBox.y + copyBox.height <= repeatBox.y + 1, label + ': copy/share above repeat controls');
     assert.ok(Math.abs(repeatBox.width - newVoteBox.width) < 1, label + ': primary action widths match');
 
     if (file === 'dist/index.html') {
@@ -120,7 +132,7 @@ async function runCase(browser, file, language, width) {
       await page.screenshot({ path: path.join(results, `result-${language}-${width}.png`), fullPage: true });
     }
     const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#saveResultButton').click()]);
-    assert.match(download.suggestedFilename(), /\.txt$/i, label + ': exported text');
+    assert.equal(download.suggestedFilename(), language === 'ja' ? '投票結果.txt' : 'vote-results.txt', label + ': localized default filename');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': no horizontal overflow');
     await page.locator('#newVoteButton').click(); await page.locator('#appConfirmOk').click();
     assert.equal(await page.locator('#setupScreen').isVisible(), true);
