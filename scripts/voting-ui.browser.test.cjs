@@ -141,6 +141,10 @@ async function runCase(browser, file, language, width) {
     assert.ok(repeatBox && newVoteBox && copyBox && Math.abs(repeatBox.y - newVoteBox.y) < 1, label + ': primary actions share a row');
     assert.ok(copyBox.y + copyBox.height <= repeatBox.y + 1, label + ': copy/share above repeat controls');
     assert.ok(Math.abs(repeatBox.width - newVoteBox.width) < 1, label + ': primary action widths match');
+    if (language === 'ja' && width === 320) {
+      const lineCount = await page.locator('#newVoteButton span').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
+      assert.ok(lineCount < 1.2, label + ': Change setup label has no orphan last character');
+    }
 
     if (file === 'dist/index.html') {
       const results = path.resolve(__dirname, '..', 'test-results', 'voting-ui');
