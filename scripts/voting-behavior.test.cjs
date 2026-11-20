@@ -400,7 +400,7 @@ test('manual participant counts are validated rather than silently coerced', asy
   app.el('appConfirmOk').click(); await app.settle();
   assert.equal(state(app).participants, 3);
 });
-test('hero is setup-only, list is minimal, and result save begins collapsed', async () => {
+test('hero is setup-only, list is minimal, and result save is directly accessible', async () => {
   const app = createApp(filename);
   assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
   assert.ok(app.el('choiceListDetails').querySelector('summary svg'));
@@ -416,9 +416,9 @@ test('hero is setup-only, list is minimal, and result save begins collapsed', as
   assert.equal(app.document.body.classList.contains('vote-in-progress'), false);
 });
 
-(async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();
 
 // UI refinements must not change the vote data or compromise the start confirmation.
+
 test('start confirmation shows escaped structured question, participant count, and choices', async () => {
   const app = createApp(filename);
   setup(app, ['<img src=x onerror=alert(1)>', '二択']);
@@ -440,3 +440,5 @@ test('setup options show only inputs and accessible removal controls', () => {
   assert.equal(app.document.querySelectorAll('.option-row').length, 3);
   assert.equal(app.document.querySelectorAll('.remove-option').length, 3);
 });
+
+(async () => { let failed = 0; console.log('Behavior target: ' + filename); for (const item of tests) { try { await item.body(); console.log('PASS ' + item.name); } catch (error) { failed++; console.error('FAIL ' + item.name + '\n' + (error.stack || error)); } } console.log(`${tests.length - failed}/${tests.length} behavior tests passed`); process.exitCode = failed ? 1 : 0; })();
