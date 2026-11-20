@@ -235,3 +235,15 @@ test('setup hints remain in heading rows while help and save controls stay acces
   assert.ok(app.el('outputFilename').closest('.result-export-row'));
   assert.equal(app.el('revealScreen').querySelector('.abort-vote-button'), null);
 });
+
+
+test('CSS consolidation removes obsolete selectors and keeps result groups and textarea rules', () => {
+  assert.doesNotMatch(html, /\.result-actions\s*\{/);
+  assert.doesNotMatch(html, /\.option-number\s*\{/);
+  assert.match(html, /\.result-share-actions\s*\{/);
+  assert.match(html, /\.result-repeat-actions\s*\{/);
+  assert.match(html, /\.filename-extension\s*\{/);
+  const question = html.match(/\.question-input\s*\{([^}]+)\}/)?.[1] || '';
+  assert.match(question, /min-height:80px/);
+  assert.match(question, /padding:12px 16px/);
+});
