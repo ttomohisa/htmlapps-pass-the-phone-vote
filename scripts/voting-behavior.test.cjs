@@ -487,6 +487,30 @@ test('result text export is collapsed initially and resets on result entry', asy
   assert.equal(app.el('resultExportDetails').open, false);
 });
 
+test('pasted line breaks become spaces and cannot create visually duplicated choices', async () => {
+  const app = createApp(filename);
+  app.input(app.el('questionInput'), 'Question\\nwith a line break'.replace('\\n','\n'));
+  assert.equal(app.el('questionInput').value, 'Question with a line break');
+  app.input(app.inputs()[0], 'North\\nSouth'.replace('\\n','\n'));
+  assert.equal(app.inputs()[0].value, 'North South');
+  app.input(app.inputs()[1], 'North South');
+  app.input(app.inputs()[2], 'Third choice');
+  app.input(app.el('participantCount'), '2');
+  app.el('startVoteButton').click();
+  assert.equal(app.el('appConfirmDialog').open, false, 'duplicate visually identical options rejected');
+  assert.equal(app.inputs()[1].getAttribute('aria-invalid'), 'true');
+});
+
+test('IME composition leaves wrapped text untouched until compositionend', () => {
+  const app = createApp(filename);
+  const choice = app.inputs()[0];
+  choice.value = 'East\\nWest'.replace('\\n','\n');
+  choice.dispatch('input', { isComposing: true });
+  assert.ok(choice.value.includes('\n'));
+  choice.dispatch('compositionend');
+  assert.equal(choice.value, 'East West');
+});
+
 // UI refinements must not change the vote data or compromise the start confirmation.
 
 test('start confirmation shows escaped structured question, participant count, and choices', async () => {
