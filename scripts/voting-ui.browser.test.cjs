@@ -163,6 +163,60 @@ async function runCase(browser, file, language, width) {
     throw error;
   } finally { await context.close(); }
 }
+async function runStressCase(browser) {
+  const context = await browser.newContext({
+    viewport: { width: 320, height: 568 }, locale: 'ja', reducedMotion: 'reduce', acceptDownloads: true,
+  });
+  const page = await context.newPage(), errors = [], requests = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('request', req => { if (/^https?:/.test(req.url())) requests.push(req.url()); });
+  try {
+    await page.goto(pathToFileURL(path.resolve(__dirname, '..', 'dist/index.html')).href);
+    await page.locator('#presetCustom').click();
+    await page.locator('#questionInput').fill('質問'.repeat(100));
+    for (let i = 0; i < 10; i++) {
+      if (i >= 3) await page.locator('#addOptionButton').click();
+      await page.locator('.option-input').nth(i).fill('候補' + (i + 1) + '長'.repeat(73));
+    }
+    await page.locator('#participantCount').fill('3');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '10 long choices: setup does not overflow');
+
+    await page.locator('#startVoteButton').click();
+    assert.equal(await page.locator('#appConfirmDialog').evaluate(el => el.open), true, 'long start confirmation opens');
+    await page.locator('#appConfirmOk').scrollIntoViewIfNeeded();
+    const ok = await page.locator('#appConfirmOk').boundingBox();
+    assert.ok(ok && ok.y >= 0 && ok.y + ok.height <= 568, 'long confirmation remains actionable at 320x568');
+    await page.locator('#appConfirmOk').click();
+
+    for (let voter = 0; voter < 3; voter++) {
+      if (voter === 0) await page.locator('#beginVoteButton').click();
+      else await page.locator('#nextVoterButton').click();
+      assert.equal(await page.locator('#voteScreen').isVisible(), true);
+      await page.locator('.vote-option').nth(voter === 0 ? 9 : voter).click();
+      await page.locator('#confirmVoteButton').click();
+    }
+    assert.equal(await page.locator('#revealScreen').isVisible(), true);
+    await page.locator('#alternateRevealButton').click();
+    await page.locator('#appConfirmOk').click();
+    assert.equal(await page.locator('#resultList .result-item').count(), 10, 'all long results retained');
+    assert.equal(await page.locator('#totalVotesValue').innerText(), '3');
+    assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), null, 'optional save initially collapsed');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'long result labels do not overflow');
+
+    await page.locator('#resultExportDetails summary').click();
+    const saveBox = await page.locator('#saveResultButton').boundingBox();
+    const nameBox = await page.locator('#outputFilename').boundingBox();
+    assert.ok(saveBox && nameBox && nameBox.x + nameBox.width <= saveBox.x + 2, 'expanded export stays inline');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'expanded export does not overflow');
+    await page.locator('#languageButton').click();
+    assert.equal(await page.locator('#totalVotesValue').innerText(), '3', 'language switch preserves totals');
+    assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), '', 'language switch preserves open disclosure');
+    assert.deepEqual(errors, [], 'long-text stress has no JavaScript errors');
+    assert.deepEqual(requests, [], 'long-text stress sends no network requests');
+    console.log('PASS 10 long choices, 200-character question, 320x568, three votes, and result export');
+  } finally { await context.close(); }
+}
+
 async function main() {
   const browser = await chromium.launch();
   try {
@@ -171,6 +225,7 @@ async function main() {
         for (const width of [320, 1440]) await runCase(browser, file, language, width);
       }
     }
+    await runStressCase(browser);
   } finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
