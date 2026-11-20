@@ -75,7 +75,7 @@ No runtime third-party library is required by the app itself.
 - Duplicate or blank choices are rejected before voting starts.
 - Deleting a choice or replacing choices offers **Undo**. It is available only until a newer setup edit or vote start, so it cannot replace newer work.
 - Removing a choice moves keyboard focus to the next remaining choice, or the previous choice when removing the last row.
-- Question and choice fields expand vertically to show long text (up to 200 and 80 characters, respectively). Enter advances through fields; confirming Japanese or other IME composition leaves focus and choice count unchanged.
+- Question and choice fields expand vertically to show long text (up to 200 and 80 characters, respectively), including when the screen size changes. Pasted line breaks are converted to spaces; use **Paste a list** to enter multiple choices at once. Enter advances through fields; confirming Japanese or other IME composition leaves focus and choice count unchanged.
 
 ### Result actions
 
