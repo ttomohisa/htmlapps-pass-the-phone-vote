@@ -417,6 +417,22 @@ test('hero is setup-only, list is minimal, and result save is directly accessibl
 });
 
 
+test('result text export is collapsed initially and resets on result entry', async () => {
+  const app = createApp(filename);
+  assert.equal(app.el('resultExportDetails').open, false);
+  assert.ok(app.el('resultExportDetails').querySelector('summary'));
+  await completed(app);
+  app.el('alternateRevealButton').click();
+  app.el('appConfirmOk').click();
+  await app.settle();
+  assert.equal(app.screen(), 'resultScreen');
+  assert.equal(app.el('resultExportDetails').open, false, 'reveal never opens optional save controls');
+  app.el('resultExportDetails').open = true;
+  assert.equal(app.el('resultExportDetails').open, true);
+  app.run("showScreen('resultScreen')");
+  assert.equal(app.el('resultExportDetails').open, false);
+});
+
 // UI refinements must not change the vote data or compromise the start confirmation.
 
 test('start confirmation shows escaped structured question, participant count, and choices', async () => {
