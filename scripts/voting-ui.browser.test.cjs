@@ -190,6 +190,12 @@ async function runStressCase(browser) {
     await page.locator('#appConfirmOk').scrollIntoViewIfNeeded();
     const ok = await page.locator('#appConfirmOk').boundingBox();
     assert.ok(ok && ok.y >= 0 && ok.y + ok.height <= 568, 'long confirmation remains actionable at 320x568');
+    await page.setViewportSize({ width: 393, height: 252 });
+    await page.locator('#appConfirmOk').scrollIntoViewIfNeeded();
+    const narrow = await page.locator('#appConfirmOk').boundingBox();
+    assert.ok(narrow && narrow.y >= -1 && narrow.y + narrow.height <= 253, 'long confirmation controls reachable at 393x252');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'short confirm dialog has no overflow');
+    await page.setViewportSize({ width: 320, height: 568 });
     await page.locator('#appConfirmOk').click();
 
     for (let voter = 0; voter < 3; voter++) {
