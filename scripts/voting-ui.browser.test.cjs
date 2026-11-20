@@ -101,7 +101,11 @@ async function runCase(browser, file, language, width) {
     await page.evaluate(() => window.dispatchEvent(new Event('blur')));
     assert.equal(await page.locator('#resultScreen').isVisible(), true, label + ': no curtain on results');
     assert.equal(await page.locator('#totalVotesValue').innerText(), '2', label + ': exactly two votes');
-    assert.equal(await page.locator('#resultExportDetails').isVisible(), true, label + ': save controls always available');
+    assert.equal(await page.locator('#resultExportDetails summary').isVisible(), true, label + ': optional export disclosure visible');
+    assert.equal(await page.locator('#resultExportDetails').getAttribute('open'), null, label + ': export initially collapsed');
+    assert.equal(await page.locator('#saveResultButton').isVisible(), false, label + ': save controls hidden by default');
+    await page.locator('#resultExportDetails summary').click();
+    assert.equal(await page.locator('#saveResultButton').isVisible(), true, label + ': save controls visible after expanding');
     assert.equal(await page.locator('#saveResultButton svg').count(), 1, label + ': save icon');
     assert.equal(await page.locator('#saveResultButton span').innerText(), language === 'ja' ? '結果を保存' : 'Save result');
     const filenameBox = await page.locator('#outputFilename').boundingBox();
