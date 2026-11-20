@@ -46,6 +46,18 @@ async function runCase(browser, file, language, width) {
       assert.ok(await page.locator('.option-input').first().evaluate(el => el.scrollHeight <= el.clientHeight + 2));
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': long input fits');
     }
+    if (language === 'ja' && width === 1440 && file === 'dist/index.html') {
+      // A tablet/phone rotation changes wrapping width without a new input event.
+      await page.locator('#questionInput').fill('長い質問'.repeat(35));
+      await page.locator('.option-input').first().fill('長い選択肢'.repeat(10));
+      await page.setViewportSize({ width: 320, height: 568 });
+      const questionDims = await page.locator('#questionInput').evaluate(el => ({ client: el.clientHeight, scroll: el.scrollHeight }));
+      const optionDims = await page.locator('.option-input').first().evaluate(el => ({ client: el.clientHeight, scroll: el.scrollHeight }));
+      assert.ok(questionDims.scroll <= questionDims.client + 2 || questionDims.client >= 316, label + ': resize adjusts question textarea height');
+      assert.ok(optionDims.scroll <= optionDims.client + 2 || optionDims.client >= 316, label + ': resize adjusts choice textarea height');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), label + ': resized setup has no horizontal overflow');
+      await page.setViewportSize({ width, height });
+    }
     if (language === 'ja' && width === 320) {
       const heroLines = await page.locator('#heroTitle').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
       assert.ok(heroLines < 1.2, label + ': Japanese hero has no orphan last character');
