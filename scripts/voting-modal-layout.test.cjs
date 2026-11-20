@@ -21,13 +21,13 @@ test('build information is the final Help body item, not main-page content', () 
   }
 });
 
-test('local-processing badge and footer use the same English phrase', () => {
+test('footer keeps local-processing wording without standalone format', () => {
   const app = createApp(filename, { language: 'en' });
   assert.equal(app.run("t('localBadge')"), 'Fully local processing');
-  assert.equal(app.run("t('footer')"), 'Fully local processing · Single HTML');
+  assert.equal(app.run("t('footer')"), 'Fully local processing');
   app.el('languageButton').click();
   assert.equal(app.run("t('localBadge')"), '完全ローカル処理');
-  assert.equal(app.run("t('footer')"), '完全ローカル処理・単一HTML');
+  assert.equal(app.run("t('footer')"), '完全ローカル処理');
 });
 
 test('keyboard clicks inside Help do not masquerade as backdrop clicks', () => {
@@ -222,3 +222,16 @@ for (const language of ['en', 'ja']) {
     });
   }
 }
+
+
+test('setup hints remain in heading rows while help and save controls stay accessible', () => {
+  const app = createApp(filename);
+  assert.ok(app.el('setupTitle').classList.contains('sr-only'));
+  for (const key of ['questionHelp', 'choicesHelp', 'participantsHelp']) {
+    const hint = app.document.querySelector('[data-i18n="' + key + '"]');
+    assert.ok(hint && hint.closest('.field-heading'), key + ' belongs beside its label');
+  }
+  assert.equal(app.document.querySelector('[data-i18n="presetHelp"]'), null);
+  assert.ok(app.el('outputFilename').closest('.result-export-row'));
+  assert.equal(app.el('revealScreen').querySelector('.abort-vote-button'), null);
+});
