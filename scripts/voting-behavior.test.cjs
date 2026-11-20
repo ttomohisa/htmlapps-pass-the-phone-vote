@@ -89,7 +89,7 @@ for (const language of ['en', 'ja']) for (const index of [0, 1, 2]) {
     const remove = app.document.querySelectorAll('.remove-option')[index];
     remove.focus(); remove.click(); app.frame(50);
     assert.equal(app.document.activeElement, app.inputs()[Math.min(index, 1)]);
-    assert.ok(app.document.querySelectorAll('input').includes(app.document.activeElement));
+    assert.ok(app.inputs().includes(app.document.activeElement), 'focus stays in the remaining choice textarea');
     assert.equal(app.el('appToastAction').hidden, false);
     app.el('appToastAction').click();
     assert.deepEqual(app.inputs().map(input => input.value), ['Rice', 'Pasta', 'Salad']);
@@ -450,7 +450,7 @@ test('localized filename base has a fixed suffix and keeps edits across language
   for (const [language, base, download] of [['en','vote-results','vote-results.txt'], ['ja','投票結果','投票結果.txt']]) {
     const app = createApp(filename, { language });
     assert.equal(app.el('outputFilename').value, base);
-    assert.equal(app.document.querySelector('.filename-extension').textContent, '.txt');
+    assert.ok(app.html.includes('class="filename-extension" aria-hidden="true">.txt</span>'))
     await completed(app); hold(app); app.frame(1200);
     app.el('saveResultButton').click(); assert.equal(app.downloads[0].name, download);
     assert.equal(app.el('outputFilename').value, base, 'extension is not repeated in editable input');
