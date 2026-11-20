@@ -1,11 +1,13 @@
 # Changelog
 
-## 1.0.4
+## 1.0.5
 
 - Open the next person’s ballot directly from the neutral handoff screen with one tap; retain the first-voter and recovery ready screens, preventing accidental exposure of unfinished choices.
 - Replace question/choice single-line inputs with bounded auto-growing textareas while retaining Enter/IME navigation and character limits.
 - Display localized short result filenames without the editable `.txt` extension, group Save/Copy/Share above a separate repeat/change setup row, and rename New vote / 新しい投票 to Change setup / 内容を変えて投票.
 - Consolidate duplicate CSS declarations and remove obsolete option-number/result-action selectors, retaining the mobile 8px spacing rhythm.
+
+## 1.0.4
 
 - Tighten the main voting layout to an 8px spacing rhythm: remove decorative choice numbers and redundant setup copy, move limits beside the three field labels, quiet the remove controls and privacy note, and simplify the footer.
 - Present a structured, escaped start confirmation; remove the abort shortcut from the completed-vote reveal screen only.
