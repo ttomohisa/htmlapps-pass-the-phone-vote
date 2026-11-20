@@ -81,7 +81,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Results show counts, percentages, top choices, and ties.
 - Whole-number percentages are allocated deterministically so displayed percentages total 100%.
 - “Copy result” produces plain text containing only the question, aggregate choice counts/percentages, and total votes.
-- The editable result filename and “Save result” button are visible side by side after reveal. Save downloads exactly the same aggregate text as Copy/Share only for a valid completed and revealed current session; it never exports intermediate or individual votes.
+- The editable result filename and “Save result” button appear side by side only after expanding an initially collapsed “Save result as text” disclosure after reveal. Save downloads exactly the same aggregate text as Copy/Share only for a valid completed and revealed current session; it never exports intermediate or individual votes.
 - The result filename defaults to `pass-the-phone-vote-results.txt`, stays editable for the current result, removes unsafe filename characters, and normalizes the final extension to `.txt`. Empty/unsafe names use a valid default.
 - “Share result” is shown only when Web Share API is available and shares the same aggregate-only text.
 - “Vote again with same setup” asks for confirmation and then resets only counts/completed progress while preserving question, choices, and participant count.
@@ -136,7 +136,7 @@ Confirmed votes increment only the aggregate count for the selected option. The 
 - Participant stepper controls expose localized accessible names in Japanese and English and use 44px or larger touch targets.
 - Ready, vote, confirmation, handoff, reveal, and result states are visually distinct. Start confirmation groups the untrusted question text, participant count, choices, and immutable-after-start warning without interpreting them as HTML. The core layout uses an 8px spacing rhythm with mobile-safe controls.
 - The reveal control shows hold progress and also provides a visually subdued non-hold alternative with confirmation. The abort shortcut is omitted from the reveal screen only; earlier active voting screens still allow confirmed cancellation.
-- Voting choices and primary actions use large tap targets. Paste-list entry remains borderless; the setup intro and preset helper are not shown. Choice rows show an input and a visually quiet, accessible remove button without decorative numbering. The question, choice, and participant limits are beside their labels. The export filename and Save button remain visible in one row.
+- Voting choices and primary actions use large tap targets. Paste-list entry remains borderless; the setup intro and preset helper are not shown. Choice rows show an input and a visually quiet, accessible remove button without decorative numbering. The question, choice, and participant limits are beside their labels. The optional export filename and Save button appear in one row only when the text-export disclosure is expanded.
 - The handoff state is identical regardless of the selected choice.
 - All controls have visible labels or accessible names and visible focus states.
 - Motion respects `prefers-reduced-motion`.
