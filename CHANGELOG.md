@@ -2,6 +2,10 @@
 
 ## 1.0.4
 
+- Tighten the main voting layout to an 8px spacing rhythm: remove decorative choice numbers and redundant setup copy, move limits beside the three field labels, quiet the remove controls and privacy note, and simplify the footer.
+- Present a structured, escaped start confirmation; remove the abort shortcut from the completed-vote reveal screen only.
+- Keep the editable filename and an icon-bearing Save result button on one row instead of hiding the export controls behind a disclosure. Preserve UTF-8 `.txt` exports and existing vote/recovery safeguards.
+
 - Add version-gated automatic GitHub Releases on `main`: verified HTML, self-extracting HTML, ZIP, and SHA-256 checksums.
 - Remove the participant-stepper +/- button borders and fills, retaining 44px touch targets and visible keyboard focus.
 - Align the three quick-setup presets at equal widths on phones, replace the paste-list and text-save disclosure icons, shorten the ready-screen instruction, and reorganize result actions into compact primary and utility rows in both languages.
